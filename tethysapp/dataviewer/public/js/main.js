@@ -42,10 +42,25 @@ function select_data(option) {
         contentType: "application/json",
         method: 'GET',
         success: function (result) {
+            const segments = thredds_url.split('/');
+            const last = segments.pop() || segments.pop();
             filetree = JSON.parse(result['filetree']);
-            up_value = ['data_viewer'];
-            console.log(up_value);
+            filepath = [last];
+            console.log(filepath);
+            console.log(filetree['data_viewer'][0]);
 
+            $('#file-tree').append(`<input type="checkbox" id="${filepath[0]}" style="margin-left: 15px">
+                                        <label for="${filepath[0]}">${filepath[0]}</label><br>`);
+            for (i = 0; i < filetree[filepath[0]].length; i++) {
+                $('#file-tree').append(`<input type="checkbox" id="${filetree[filepath[0]][i]}" style="margin-left: 15px">
+                                        <label for="${filetree[filepath[0]][i]}">${filetree[filepath[0]][i]}</label><br>`);
+                console.log(i)
+            }
+        }
+    })
+};
+
+/*
             $('#data-options').empty();
             $('#data-options-two').empty();
 
@@ -64,7 +79,10 @@ function select_data(option) {
 
 $('#data-options').change(function () {
     if ($('#data-options').val().slice(-3) == '.nc' ) {
-        alert($('#data-options-two').val())
+        file = $('#data-options').val();
+        layer = $('#data-options').val().slice(22, -3);
+        wmsLayer = data_layer(file, layer);
+        alert(file + '; ' + layer);
     } else {
         let new_file = $('#data-options').val();
 
@@ -80,7 +98,13 @@ $('#data-options').change(function () {
 $('#data-options-two').change(function () {
 
     if ($('#data-options-two').val().slice(-3) == '.nc' ) {
-        alert($('#data-options-two').val())
+        if (up_value.length == 1) {
+            var file =  $('#data-options').val() + '/' + $('#data-options-two').val();
+        } else {
+            var file = up_value[up_value.length - 1] + '/' + $('#data-options').val() + '/' + $('#data-options-two').val();
+        }
+        let layer = $('#data-options-two').val().slice(22, -3);
+        wmsLayer = data_layer(file, layer);
 
     } else {
         let new_file = $('#data-options-two').val();
@@ -113,12 +137,10 @@ $('#data-options-two').change(function () {
 });
 
 $('#file-up').click(function () {
-    let count = up_value.length;
-    if (count == 1) {
+    if (up_value.length == 1) {
         alert('You have reached the top!!!')
     } else {
-        let current_file = up_value[count - 2];
-        alert(count + ': ' + up_value + ': ' + current_file);
+        let current_file = up_value[up_value.length - 2];
         up_value.pop();
 
         $('#data-options').empty();
@@ -135,6 +157,7 @@ $('#file-up').click(function () {
         }
     }
 });
+*/
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -143,8 +166,8 @@ $(function() {
     select_data('none');
 });
 
-let layerWMS = data_layer();
-let layerControls = layer_control();
+// let layerWMS = data_layer();
+// let layerControls = layer_control();
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //ADD A USER SHAPEFILE TO THE MAP
@@ -187,7 +210,7 @@ function uploadShapefile() {
         },
     });
 }
-
+/*
 function make_file_layer(geojson) {
     let polygons = geojson;
     let style = {
@@ -318,7 +341,7 @@ mapObj.on('click', function (e) {
         layer = e.layer;
 
     get_timeseries(type, layer);
-});
+});*/
 
 $('#clear-map').click(function(){
     var drawingLayer = drawing_layer();
