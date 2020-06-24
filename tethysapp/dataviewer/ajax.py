@@ -5,6 +5,7 @@ import pandas as pd
 import geopandas
 import os
 import glob
+import json
 
 
 def shp_to_geojson(file_path):
@@ -39,6 +40,19 @@ def uploadShapefile(request):
     for file in glob.glob(os.path.join(shp_path, '*')):
         if os.path.splitext(os.path.basename(file))[0] == filename:
             os.remove(file)
+
+    return JsonResponse({'geojson': geojson})
+
+def user_geojsons(request):
+    geojson_path = os.path.join(os.path.dirname(__file__), 'workspaces', 'app_workspace')
+    files = glob.glob(os.path.join(geojson_path, '*.geojson'))
+    geojson = []
+
+    for file in files:
+        geojson.append(geopandas.read_file(file))
+
+    geojson = json.dumps(geojson)
+    print(geojson)
 
     return JsonResponse({'geojson': geojson})
 

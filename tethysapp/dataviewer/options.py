@@ -1,14 +1,11 @@
 from django.http import JsonResponse
 from .app import Dataviewer as App
 import glob
-import datetime
 import os
 import json
 
 
 def walk_files(path, dictionary):
-    print(path)
-    print(os.path.basename(path))
     file = glob.glob(os.path.join(path, '*'))
     filename = ()
     for files in file:
@@ -30,7 +27,6 @@ def file_tree(request):
 
     filetree = walk_files(thredds_path, dictionary)
     filetree_json = json.dumps(filetree)
-    print(filetree)
 
     return JsonResponse({'filetree': filetree_json})
 

@@ -5,6 +5,12 @@ function map() {
     return L.map('map', {
         center: [0, 0],
         zoom: 3,
+        timeDimension: true,
+/*        timeDimensionOptions: {
+            timeInterval: "2014-09-30/2014-10-30",
+            period: "PT1H"
+        }, */
+        timeDimensionControl: true,
     });
 }
 
@@ -19,37 +25,37 @@ function basemaps() {
         "ESRI Terrain": L.layerGroup([esri_terrain, esri_labels]),
     }
 }
-/*
-function data_layer(file, layer){
-    const wmsurl = thredds_url + file; // $('#data-options').val() + '/' + $('#data-options-two').val();
-    alert(wmsurl);
-    const current_layer = layer;// $('#data-options-two').val().slice(22, -3);
-    alert(current_layer);
+
+function data_layer(filename, layer, files, date_range){
+    const wmsurl = thredds_url + files + filename;
+    const current_layer = layer;
+
     const wmsLayer = L.tileLayer.wms(wmsurl, {
-        layers: current_layer,
+        layers: 'precipitation',
         dimension: 'time',
         useCache: true,
         crossOrigin: false,
         format: 'image/png',
         transparent: true,
-        colorscalerange: '0,50',
-        BGCOLOR: '0x000000',
+        colorscalerange: '0,100',
+        //BGCOLOR: '0x000000',
     });
-    return wmsLayer.addTo(mapObj) /!*L.timeDimension.layer.wms(wmsLayer, {
+    return L.timeDimension.layer.wms(wmsLayer, {
         name: 'time',
         requestTimefromCapabilities: true,
         updateTimeDimension: true,
         updateTimeDimensionMode: 'replace',
-        cache: 20,
-    }).addTo(mapObj);*!/
-}*/
+    }).addTo(mapObj);
+}
 
-function data_layer(file, layer){
-    const wmsurl = thredds_url + file;
+/*
+function data_layer(filename, layer, files, date_range){
+    const wmsurl = thredds_url + files + filename;
     const current_layer = layer;
+    alert(current_layer);
 
     return netCDF_layer = L.tileLayer.wms(wmsurl, {
-        layers: percipitation, //current_layer,
+        layers: 'precipitation',
         useCache: true,
         crossOrigin: false,
         format: 'image/png',
@@ -57,4 +63,4 @@ function data_layer(file, layer){
         colorscalerange: '0,100',
     }).addTo(mapObj);
 }
-
+*/

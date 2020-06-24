@@ -6,3 +6,7 @@
     bottom: 50px;
 }
 
+.nested {
+    display: none;
+    color: pink;
+}

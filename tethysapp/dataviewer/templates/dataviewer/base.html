@@ -15,16 +15,9 @@
 
 {% block app_navigation_items %}
   <br>
-  <div id="file-tree" style="width: 100%; height: 300px; background-color: #ffffff; overflow: scroll"></div>
-  <br>
-  <select name="data-options" id="data-options" style="width: 80%; height: 30px;"></select>
-  <button class="btn" id="file-up" style="width: 15%; height: 30px; float: right; background-color: #16a185;">UP</button>
-  <br><br>
-  <select name="data-options" id="data-options-two" style="width: 100%; height: 30px;"></select>
+    <div id="file-tree" style="width: 600px; height: 300px; background-color: #ffffff; overflow: scroll; overflow-x: auto;"></div>
   <br>
   <button class="btn btn-block nav-buttons" id="add-shp">Add Shapefiles</button>
-  <br>
-  <button class="btn btn-block nav-buttons" id="click-me">Click Me</button>
   <br>
   <button class="btn btn-block nav-buttons" id="clear-map">Clear Map</button>
 {% endblock %}
