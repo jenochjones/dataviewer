@@ -8,6 +8,39 @@ import glob
 import json
 
 
+###################################################################################
+
+# MAP CONTROLLERS
+
+def rename_shp(request):
+    try:
+        shp_name = request.GET['shp_name'].strip('"')
+        new_name = request.GET['new_name'].strip('"')
+        directory = os.path.join(os.path.dirname(__file__), 'workspaces', 'app_workspace')
+        os.rename(os.path.join(directory, shp_name + '.geojson'), os.path.join(directory, new_name + '.geojson'))
+        result = True
+    except:
+        result = False
+
+    return JsonResponse({'new_name': new_name, 'result': result})
+
+
+def delete_shp(request):
+    try:
+        shp_name = request.GET['shp_name'].strip('"')
+        directory = os.path.join(os.path.dirname(__file__), 'workspaces', 'app_workspace')
+        os.remove(os.path.join(directory, shp_name + '.geojson'))
+        result = True
+    except:
+        result = False
+
+    return JsonResponse({'result': result})
+
+
+####################################################################################
+
+# GEOMATICS FUNCTIONS
+
 def shp_to_geojson(file_path):
     file_list = glob.glob(os.path.join(file_path, '*.shp'))
     filepath = file_list[0]
@@ -36,13 +69,15 @@ def uploadShapefile(request):
 
 
     geojson, filename = shp_to_geojson(shp_path)
-    filenames = json.dumps(filename[:-8])
+    print(filename)
+    filenames = json.dumps(filename)
+    print(filenames)
 
     for file in glob.glob(os.path.join(shp_path, '*')):
         if os.path.splitext(os.path.basename(file))[0] == filename:
             os.remove(file)
 
-    return JsonResponse({'geojson': geojson, 'filenames': filenames})
+    return JsonResponse({'filenames': filenames})
 
 def user_geojsons(request):
     geojson_path = os.path.join(os.path.dirname(__file__), 'workspaces', 'app_workspace')
@@ -81,15 +116,10 @@ def get_shp_values(request):
     #coordinates = request.GET['coordinates']
     filename = request.GET['filename']
     #.strip('"')
-    #print(json.loads(coordinates))
-    #print(coordinates)
-    #print(str(coordinates))
-    print(filename)
     thredds_path = App.get_custom_setting('thredds_path')
     var = 'precipitation'
     file = os.path.join(thredds_path, filename)
     #series = geo.timeseries.polygons([file], var, coordinates, 'time', stats='mean,max,median,min,sum,std')
-    #print(series)
     #data = pd.DataFrame.to_json(series)
     time = 'datetime'
     value = 'mean'

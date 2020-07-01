@@ -17,13 +17,13 @@
   <br>
     <div id="file-tree" style="width: 600px; height: 300px; background-color: #ffffff; overflow: scroll; overflow-x: auto;"></div>
   <br>
-  <div id="user-shpfiles" style="width: 100%; height: 150px; background-color: white; text-align: center">
+  <div id="user-shpfiles" style="width: 100%; height: 180px; background-color: white; text-align: center">
       <p style="display: inline-block; margin: 10px">User Uploaded Shapefiles</p>
-      <select id="shp-select" name="shp-select" style="width: 80%;"><option value="" disabled selected hidden>Zoom To Layer</option></select>
-      <select id="properties" name="properties" style="width: 80%; margin: 10px">
-        <option value="" disabled selected hidden>Display Property</option>
-      </select>
+      <select id="shp-select" name="shp-select" style="width: 80%;"></select>
+      <select id="properties" name="properties" style="width: 80%; margin: 10px"></select>
       <button id="add-shp" style="display: inline-block; width: 80%; background-color: #99d0c2">Add Shapefiles</button><br>
+      <button id="delete-shp" style="display: inline-block; width: 39%; background-color: #99d0c2; margin-top: 10px;">Delete</button>
+      <button id="rename-shp" style="display: inline-block; width: 39%; background-color: #99d0c2; margin-top: 10px;">Rename</button><br>
   </div>
   <button id="clear-map" style="width: 80%; margin: 30px; display: inline-block; background-color: #99d0c2">Clear Map</button>
 {% endblock %}

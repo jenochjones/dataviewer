@@ -60,6 +60,16 @@ class Dataviewer(TethysAppBase):
                 url='dataviewer/options/file_tree',
                 controller='dataviewer.options.file_tree'
             ),
+            UrlMap(
+                name='frename_shp',
+                url='dataviewer/ajax/rename_shp',
+                controller='dataviewer.ajax.rename_shp'
+            ),
+            UrlMap(
+                name='delete_shp',
+                url='dataviewer/ajax/delete_shp',
+                controller='dataviewer.ajax.delete_shp'
+            ),
         )
 
         return url_maps

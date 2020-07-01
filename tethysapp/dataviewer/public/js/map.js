@@ -55,12 +55,11 @@ function data_layer(filename, layer, files, date_range){
 
     return wmsLayerTime.addTo(mapObj);
 }
-
+/*
 function drawing_layer(){
     return L.layerGroup().addTo(mapObj);
 }
 
-/*
 function data_layer(filename, layer, files, date_range){
     const wmsurl = thredds_url + files + filename;
     const current_layer = layer;

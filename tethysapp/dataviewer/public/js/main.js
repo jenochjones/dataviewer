@@ -36,9 +36,6 @@ function getCookie(name) {
 function draw_graph(data, time, value) {
     var series = $.parseJSON(data);
     var length = Object.keys(series[time]).length;
-    debugger
-    alert(value);
-    alert(length);
 
     if (value == 'values') {
         let x = [];
@@ -241,7 +238,7 @@ function assign_variable_layers(file_name, folder) {
 // Functions to run on map load
 $(function() {
     select_data('none');
-    addUserLayers();
+    addUserLayers('none');
     pathToDisplayedFile = '';
     firstlayeradded = false;
 });
@@ -251,7 +248,7 @@ $(function() {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //LOAD EXISTING USER LAYERS TO MAP
-function addUserLayers() {
+function addUserLayers(select_option) {
     $.ajax({
         url: 'ajax/user_geojsons/',
         dataType: 'json',
@@ -260,7 +257,8 @@ function addUserLayers() {
         success: function (result) {
             let filenames = jQuery.parseJSON(result['filenames']);
             var geojson = jQuery.parseJSON(result['geojson']);
-
+            $('#shp-select').append('<option value="" disabled selected hidden>Zoom To Layer</option>');
+            $('#properties').append('<option value="" disabled selected hidden></option>');
             for (var i = 0, len = geojson.length; i < len; i++) {
                 let current_layer = jQuery.parseJSON(geojson[i]);
                 let geojson_layer = make_file_layer(current_layer);
@@ -275,6 +273,15 @@ function addUserLayers() {
                 }
 
                 $('#' + filenames[i].split(" ").join("") + '').data('options', option_insert);
+            }
+            if (select_option !== 'none') {
+                $('#' + select_option + '').attr("selected", "selected");
+                let id = $('#shp-select').val();
+                let geo_layer = $('#' + id.split(" ").join("") + '').data('layer');
+                let prop_id = $('#' + id.split(" ").join("") + '').data('options');
+                $('#properties').empty();
+                $('#properties').append(prop_id);
+                mapObj.flyToBounds(geo_layer.getBounds());
             }
         },
     });
@@ -309,14 +316,19 @@ function uploadShapefile() {
         processData: false,
         contentType: false,
         success: function (result) {
-            var geojson = jQuery.parseJSON(result['geojson']);
+            let id = jQuery.parseJSON(result['filenames']);
+            $('#shp-select').empty();
+            mapObj.removeLayer(user_layer);
+            addUserLayers(id);
+            $('#uploadshp-modal').modal('hide');
+/*            var geojson = jQuery.parseJSON(result['geojson']);
             var filename = jQuery.parseJSON(result['filenames']);
             $('#shp-select').append('<option id="' + filename.split(" ").join("") + '" value="' + filename + '">' + filename + '</option>');
             var geojson_layer = make_file_layer(geojson);
             $('#shp-select').data('layer', geojson_layer);
             $('#' + filename.split(" ").join("") + '').data('layer', geojson_layer);
             $('#uploadshp-modal').modal('hide');
-            mapObj.flyToBounds(geojson_layer.getBounds());
+            mapObj.flyToBounds(geojson_layer.getBounds());*/
         },
     });
 }
@@ -408,7 +420,7 @@ function timeseriesFromShp(geo_coordinate) {
         $.ajax({
             url: 'ajax/get_shp_values/',
             data: {
-                //'coordinates': JSON.stringify(coord),
+                'coordinates': JSON.stringify(coord),
                 'filename': JSON.stringify(pathToDisplayedFile),
             },
             dataType: 'json',
@@ -428,17 +440,14 @@ function timeseriesFromShp(geo_coordinate) {
 mapObj.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
         layer = e.layer;
-
+    drawnItems.addLayer(layer);
     get_timeseries(type, layer);
-
-    var drawingLayer = drawing_layer();
-
-    drawingLayer.addLayer(layer);
 });
 
 $('#clear-map').click(function(){
-    let drawingLayer = drawing_layer();
-    drawingLayer.clearLayers();
+    //let drawingLayer = drawnItems;
+    //mapObj.removeLayer(drawnItems);
+    drawnItems.clearLayers();
 });
 
 $('#shp-select').change(function () {
@@ -449,4 +458,53 @@ $('#shp-select').change(function () {
     $('#properties').append(prop_id);
     mapObj.flyToBounds(geo_layer.getBounds());
 });
+
+$('#delete-shp').click(function () {
+    let shp_name = $('#shp-select').val();
+    $.ajax({
+        url: 'ajax/delete_shp/',
+        data: {
+            'shp_name': JSON.stringify(shp_name),
+        },
+        dataType: 'json',
+        contentType: "application/json",
+        method: 'GET',
+        success: function (result) {
+            let results = result['result'];
+            if (results == true) {
+                $('#shp-select').empty();
+                mapObj.removeLayer(user_layer);
+                addUserLayers('none');
+            } else {
+                alert('False');
+            }
+        },
+    });
+});
+
+$('#rename-shp').click(function () {
+    let shp_name = $('#shp-select').val();
+    let new_name = prompt('New name of the layer (without file extention)', 'example_shp');
+    $.ajax({
+        url: 'ajax/rename_shp/',
+        data: {
+            'shp_name': JSON.stringify(shp_name),
+            'new_name': JSON.stringify(new_name),
+        },
+        dataType: 'json',
+        contentType: "application/json",
+        method: 'GET',
+        success: function (result) {
+            let results = result['result'];
+            let name = result['new_name'];
+            if (results == true) {
+                $('#shp-select').empty();
+                mapObj.removeLayer(user_layer);
+                addUserLayers(name);
+            } else {
+                alert('False');
+            }
+        },
+    });
+})
 
