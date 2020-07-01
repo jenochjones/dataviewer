@@ -17,9 +17,15 @@
   <br>
     <div id="file-tree" style="width: 600px; height: 300px; background-color: #ffffff; overflow: scroll; overflow-x: auto;"></div>
   <br>
-  <button class="btn btn-block nav-buttons" id="add-shp">Add Shapefiles</button>
-  <br>
-  <button class="btn btn-block nav-buttons" id="clear-map">Clear Map</button>
+  <div id="user-shpfiles" style="width: 100%; height: 150px; background-color: white; text-align: center">
+      <p style="display: inline-block; margin: 10px">User Uploaded Shapefiles</p>
+      <select id="shp-select" name="shp-select" style="width: 80%;"><option value="" disabled selected hidden>Zoom To Layer</option></select>
+      <select id="properties" name="properties" style="width: 80%; margin: 10px">
+        <option value="" disabled selected hidden>Display Property</option>
+      </select>
+      <button id="add-shp" style="display: inline-block; width: 80%; background-color: #99d0c2">Add Shapefiles</button><br>
+  </div>
+  <button id="clear-map" style="width: 80%; margin: 30px; display: inline-block; background-color: #99d0c2">Clear Map</button>
 {% endblock %}
 
 {% block app_content %}

@@ -27,6 +27,9 @@ function basemaps() {
 }
 
 function data_layer(filename, layer, files, date_range){
+    if (firstlayeradded == true) {
+        mapObj.removeLayer(wmsLayerTime);
+    }
     const wmsurl = thredds_url + files + filename;
     const current_layer = layer;
 
@@ -40,12 +43,21 @@ function data_layer(filename, layer, files, date_range){
         colorscalerange: '0,100',
         //BGCOLOR: '0x000000',
     });
-    return L.timeDimension.layer.wms(wmsLayer, {
+
+    wmsLayerTime = L.timeDimension.layer.wms(wmsLayer, {
         name: 'time',
         requestTimefromCapabilities: true,
         updateTimeDimension: true,
         updateTimeDimensionMode: 'replace',
-    }).addTo(mapObj);
+    });
+
+    firstlayeradded = true;
+
+    return wmsLayerTime.addTo(mapObj);
+}
+
+function drawing_layer(){
+    return L.layerGroup().addTo(mapObj);
 }
 
 /*

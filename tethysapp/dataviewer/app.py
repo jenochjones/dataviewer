@@ -51,14 +51,14 @@ class Dataviewer(TethysAppBase):
                 controller='dataviewer.ajax.get_box_values'
             ),
             UrlMap(
-                name='file_tree',
-                url='dataviewer/options/file_tree',
-                controller='dataviewer.options.file_tree'
-            ),
-            UrlMap(
                 name='user_geojsons',
                 url='dataviewer/ajax/user_geojsons',
                 controller='dataviewer.ajax.user_geojsons'
+            ),
+            UrlMap(
+                name='file_tree',
+                url='dataviewer/options/file_tree',
+                controller='dataviewer.options.file_tree'
             ),
         )
 

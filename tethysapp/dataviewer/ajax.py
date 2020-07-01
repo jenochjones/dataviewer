@@ -36,25 +36,27 @@ def uploadShapefile(request):
 
 
     geojson, filename = shp_to_geojson(shp_path)
+    filenames = json.dumps(filename[:-8])
 
     for file in glob.glob(os.path.join(shp_path, '*')):
         if os.path.splitext(os.path.basename(file))[0] == filename:
             os.remove(file)
 
-    return JsonResponse({'geojson': geojson})
+    return JsonResponse({'geojson': geojson, 'filenames': filenames})
 
 def user_geojsons(request):
     geojson_path = os.path.join(os.path.dirname(__file__), 'workspaces', 'app_workspace')
     files = glob.glob(os.path.join(geojson_path, '*.geojson'))
     geojson = []
+    filenames = []
 
     for file in files:
         geojson.append(geopandas.read_file(file))
+        filenames.append(os.path.basename(file)[:-8])
 
     geojson = json.dumps(geojson)
-    print(geojson)
-
-    return JsonResponse({'geojson': geojson})
+    filenames = json.dumps(filenames)
+    return JsonResponse({'geojson': geojson, 'filenames': filenames})
 
 ############################################################################################
 
@@ -63,6 +65,7 @@ def get_point_values(request):
     lat = request.GET['lat']
     lon = request.GET['lon']
     filename = request.GET['filename'].strip('"')
+
     thredds_path = App.get_custom_setting('thredds_path')
     var = 'precipitation'
     file = os.path.join(thredds_path, filename)
@@ -75,17 +78,24 @@ def get_point_values(request):
 
 
 def get_shp_values(request):
-    lat = request.GET['lat']
-    lon = request.GET['lon']
-
+    #coordinates = request.GET['coordinates']
+    filename = request.GET['filename']
+    #.strip('"')
+    #print(json.loads(coordinates))
+    #print(coordinates)
+    #print(str(coordinates))
+    print(filename)
     thredds_path = App.get_custom_setting('thredds_path')
-    filename = 'chirpsgefs_20200520.nc'
     var = 'precipitation'
     file = os.path.join(thredds_path, filename)
-    series = geo.timeseries.polygons([file], var, (lat, lon))
-    data = pd.DataFrame.to_json(series)
+    #series = geo.timeseries.polygons([file], var, coordinates, 'time', stats='mean,max,median,min,sum,std')
+    #print(series)
+    #data = pd.DataFrame.to_json(series)
+    time = 'datetime'
+    value = 'mean'
+    message = 'shp val is working'
 
-    return JsonResponse({'data': data})
+    return JsonResponse({'data': message}) # 'data': data, 'time': time, 'value': value})
 
 
 def get_box_values(request):
@@ -99,10 +109,10 @@ def get_box_values(request):
     var = 'precipitation'
     file = os.path.join(thredds_path, filename)
     series = geo.timeseries.bounding_box([file], var, (float(min_lon), float(min_lat)),
-                                         (float(max_lon), float(max_lat)), ('lon', 'lat'), 'time')
+                                         (float(max_lon), float(max_lat)), ('lon', 'lat'), 'time', stats='mean,max,median,min,sum,std')
     data = pd.DataFrame.to_json(series)
     time = 'datetime'
-    value = 'mean'
+    value = ('mean', 'max', 'median', 'min', 'sum', 'std')
 
     return JsonResponse({'data': data, 'time': time, 'value': value})
 
