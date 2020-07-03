@@ -6,6 +6,7 @@ import geopandas
 import os
 import glob
 import json
+import geojson as gj
 
 
 ###################################################################################
@@ -39,8 +40,6 @@ def delete_shp(request):
 
 ####################################################################################
 
-# GEOMATICS FUNCTIONS
-
 def shp_to_geojson(file_path):
     file_list = glob.glob(os.path.join(file_path, '*.shp'))
     filepath = file_list[0]
@@ -48,7 +47,7 @@ def shp_to_geojson(file_path):
     filename = os.path.splitext(file)[0]
     new_directory = os.path.join(os.path.dirname(__file__), 'workspaces', 'app_workspace')
 
-    shpfile = geopandas.read_file(os.path.join(filepath))
+    shpfile = geopandas.read_file(filepath)
     shpfile.to_file(os.path.join(new_directory, filename + '.geojson'), driver='GeoJSON')
 
     book = open(os.path.join(new_directory, filename + '.geojson'), "r")
@@ -69,9 +68,7 @@ def uploadShapefile(request):
 
 
     geojson, filename = shp_to_geojson(shp_path)
-    print(filename)
     filenames = json.dumps(filename)
-    print(filenames)
 
     for file in glob.glob(os.path.join(shp_path, '*')):
         if os.path.splitext(os.path.basename(file))[0] == filename:
@@ -95,6 +92,22 @@ def user_geojsons(request):
 
 ############################################################################################
 
+# GEOMATICS FUNCTIONS
+
+def write_new_geojson(filename, prop_name, prop_val, new_geojson):
+    geojson = (os.path.join('/Users/jonjones/tethysdev/apps/tethysapp-dataviewer/tethysapp/dataviewer/',
+                            'workspaces', 'app_workspace', filename + '.geojson'))
+
+    with open(geojson) as jsonfile:
+        data = json.load(jsonfile)
+
+    for feature in data['features']:
+        if feature['properties'][prop_name] == prop_val:
+            new_file = open(new_geojson, 'w')
+            gj.dump(feature, new_file)
+            new_file.close()
+
+
 # GET TIMESERIES VALUES
 def get_point_values(request):
     lat = request.GET['lat']
@@ -113,19 +126,26 @@ def get_point_values(request):
 
 
 def get_shp_values(request):
-    #coordinates = request.GET['coordinates']
-    filename = request.GET['filename']
-    #.strip('"')
+    nc_file = request.GET['nc_file'].strip('"')
+    geo_file = request.GET['geo_file'].strip('"')
+    prop_name = request.GET['prop_name'].strip('"')
+    prop_val = request.GET['prop_val'].strip('"')
+
+    new_geojson = os.path.join('/Users/jonjones/tethysdev/apps/tethysapp-dataviewer/tethysapp/dataviewer/',
+                               'workspaces', 'user_workspaces', 'temp.geojson')
+
+    write_new_geojson(geo_file, prop_name, prop_val, new_geojson)
+
     thredds_path = App.get_custom_setting('thredds_path')
     var = 'precipitation'
-    file = os.path.join(thredds_path, filename)
-    #series = geo.timeseries.polygons([file], var, coordinates, 'time', stats='mean,max,median,min,sum,std')
-    #data = pd.DataFrame.to_json(series)
+    file = os.path.join(thredds_path, nc_file)
+    series = geo.timeseries.polygons(files=[file], var=var, poly=new_geojson,
+                                     dims=('lon', 'lat'), t_dim='time', stats='mean,max,median,min,sum,std')
+    data = pd.DataFrame.to_json(series)
     time = 'datetime'
-    value = 'mean'
-    message = 'shp val is working'
+    value = ('mean', 'max', 'median', 'min', 'sum', 'std')
 
-    return JsonResponse({'data': message}) # 'data': data, 'time': time, 'value': value})
+    return JsonResponse({'data': data, 'time': time, 'value': value})
 
 
 def get_box_values(request):

@@ -3,6 +3,7 @@ from .app import Dataviewer as App
 import glob
 import os
 import json
+import netCDF4
 
 
 def walk_files(path, dictionary):
@@ -30,3 +31,18 @@ def file_tree(request):
 
     return JsonResponse({'filetree': filetree_json})
 
+def get_nc_attr(request):
+    last_half_filepath = request.GET['filename'].strip('"')
+    thredds_path = App.get_custom_setting('thredds_path')
+    full_path = os.path.join(thredds_path, last_half_filepath)
+    src = netCDF4.Dataset(full_path)
+    variables = {}
+
+    for name, variable in src.variables.items():
+        name_val = {}
+        for attrname in variable.ncattrs():
+            name_val[attrname] = getattr(variable, attrname)
+        variables[name] = name_val
+
+    variable_dict = json.dumps(variables)
+    return JsonResponse({'variables': variable_dict})

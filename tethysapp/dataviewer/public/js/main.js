@@ -230,7 +230,21 @@ function assign_variable_layers(file_name, folder) {
         current_file = $('#' + current_file).attr('class');
     };
     pathToDisplayedFile = files + filename;
-    data_layer(filename, layer, files, date_range);
+    dataLayer = data_layer(filename, layer, files, date_range);
+    $.ajax({
+        url: 'options/get_nc_attr/',
+        data: {
+            'filename': JSON.stringify(pathToDisplayedFile),
+        },
+        dataType: 'json',
+        contentType: "application/json",
+        method: 'GET',
+        success: function (result) {
+            console.log(jQuery.parseJSON(result['variables']));
+            $('#layer-diplay').css('display', 'block');
+            dataLayer.setOpacity($('#layer-opacity').val());
+        }
+    });
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -321,14 +335,6 @@ function uploadShapefile() {
             mapObj.removeLayer(user_layer);
             addUserLayers(id);
             $('#uploadshp-modal').modal('hide');
-/*            var geojson = jQuery.parseJSON(result['geojson']);
-            var filename = jQuery.parseJSON(result['filenames']);
-            $('#shp-select').append('<option id="' + filename.split(" ").join("") + '" value="' + filename + '">' + filename + '</option>');
-            var geojson_layer = make_file_layer(geojson);
-            $('#shp-select').data('layer', geojson_layer);
-            $('#' + filename.split(" ").join("") + '').data('layer', geojson_layer);
-            $('#uploadshp-modal').modal('hide');
-            mapObj.flyToBounds(geojson_layer.getBounds());*/
         },
     });
 }
@@ -352,7 +358,7 @@ function EachFeature(feature, layer) {
         layer.bindPopup('<div id="name-insert" style="text-align: center">'
                         + '<h1>' + feature.properties[$('#properties').val()] + '</h1></div>'
                         + '<br><button id="get-timeseries" style="width: 100%; height: 50px; '
-                        + 'background-color: aqua" onclick="timeseriesFromShp(' + JSON.stringify(feature.geometry.coordinates) + ')">'
+                        + 'background-color: aqua" onclick="timeseriesFromShp(`' + String(feature.properties[$('#properties').val()]) + '`)">'
                         + 'Get Timeseries</button></div>');
     });
 }
@@ -411,25 +417,26 @@ function get_timeseries(type, layer) {
     }
 }
 
-function timeseriesFromShp(geo_coordinate) {
+function timeseriesFromShp(prop_val) {
     if (pathToDisplayedFile == '') {
         alert('Please select a data layer.');
     } else {
-        let coord = String(geo_coordinate);
-        console.log(coord);
+        let prop_name = $('#properties').val();
+        let geo_file = $('#shp-select').val();
         $.ajax({
             url: 'ajax/get_shp_values/',
             data: {
-                'coordinates': JSON.stringify(coord),
-                'filename': JSON.stringify(pathToDisplayedFile),
+                'nc_file': JSON.stringify(pathToDisplayedFile),
+                'geo_file': JSON.stringify(geo_file),
+                'prop_name': JSON.stringify(prop_name),
+                'prop_val': JSON.stringify(prop_val),
             },
             dataType: 'json',
             contentType: "application/json",
             method: 'GET',
             success: function (result) {
-                alert(result['data']);
-                //draw_graph(result['data'], result['time'], result['value']);
-                },
+                draw_graph(result['data'], result['time'], result['value']);
+            },
         });
     }
 }
@@ -444,9 +451,15 @@ mapObj.on(L.Draw.Event.CREATED, function (e) {
     get_timeseries(type, layer);
 });
 
+drawnItems.on('click', function (e) {
+    var type = e.layerType,
+        layer = e.layer;
+    alert(type);
+    alert(layer);
+    get_timeseries(type, layer);
+});
+
 $('#clear-map').click(function(){
-    //let drawingLayer = drawnItems;
-    //mapObj.removeLayer(drawnItems);
     drawnItems.clearLayers();
 });
 
@@ -506,5 +519,9 @@ $('#rename-shp').click(function () {
             }
         },
     });
-})
+});
+
+$('#layer-opacity').change(function () {
+    dataLayer.setOpacity($('#layer-opacity').val());
+});
 

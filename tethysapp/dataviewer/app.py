@@ -70,6 +70,11 @@ class Dataviewer(TethysAppBase):
                 url='dataviewer/ajax/delete_shp',
                 controller='dataviewer.ajax.delete_shp'
             ),
+            UrlMap(
+                name='get_nc_attr',
+                url='dataviewer/options/get_nc_attr',
+                controller='dataviewer.options.get_nc_attr'
+            ),
         )
 
         return url_maps
