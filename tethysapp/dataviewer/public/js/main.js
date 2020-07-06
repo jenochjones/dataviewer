@@ -221,7 +221,6 @@ function hide_elements(classname) {
 // ASSIGN VARIABLE LAYERS
 function assign_variable_layers(file_name, folder) {
     let date_range = file_name.substr(0, 10) + '/' + file_name.substr(11, 10);
-    let layer = file_name.substr(22, file_name.length - 25);
     let filename = file_name;
     var files = '';
     var current_file = folder;
@@ -230,7 +229,6 @@ function assign_variable_layers(file_name, folder) {
         current_file = $('#' + current_file).attr('class');
     };
     pathToDisplayedFile = files + filename;
-    dataLayer = data_layer(filename, layer, files, date_range);
     $.ajax({
         url: 'options/get_nc_attr/',
         data: {
@@ -240,11 +238,28 @@ function assign_variable_layers(file_name, folder) {
         contentType: "application/json",
         method: 'GET',
         success: function (result) {
-            console.log(jQuery.parseJSON(result['variables']));
+            $('#layer-prop-select').data('variables', jQuery.parseJSON(result['variables']));
             $('#layer-diplay').css('display', 'block');
+            layer_name = set_var_select();
+            dataLayer = data_layer(filename, layer_name, files);
             dataLayer.setOpacity($('#layer-opacity').val());
         }
     });
+}
+
+function set_var_select() {
+    let variables = $('#layer-prop-select').data('variables');
+    let time_lat_lon = ['time', 'lat', 'lon', 't', 'T', 'latitude', 'longitude'];
+    $('#layer-prop-select').empty();
+    for (const [key, value] of Object.entries(variables)) {
+        if (value['long_name'] !== undefined) {
+            $('#layer-prop-select').append('<option id="' + key + '" value="' + key + '">' + value['long_name'] + '</option>');
+        } else if (time_lat_lon.indexOf(key) == -1) {
+            $('#layer-prop-select').append('<option id="' + key + '" value="' + key + '">' + key + '</option>');
+        }
+    }
+    var layer_name = $('#layer-prop-select').val();
+    return layer_name;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -378,6 +393,7 @@ function get_timeseries(type, layer) {
                     'lat': JSON.stringify(lng),
                     'lon': JSON.stringify(lat),
                     'filename': JSON.stringify(pathToDisplayedFile),
+                    'layer': JSON.stringify(layer_name),
                 },
                 dataType: 'json',
                 contentType: "application/json",
@@ -405,6 +421,7 @@ function get_timeseries(type, layer) {
                     'min_lat': JSON.stringify(min_lat),
                     'min_lon': JSON.stringify(min_lon),
                     'filename': JSON.stringify(pathToDisplayedFile),
+                    'layer': JSON.stringify(layer_name),
                 },
                 dataType: 'json',
                 contentType: "application/json",
@@ -430,6 +447,7 @@ function timeseriesFromShp(prop_val) {
                 'geo_file': JSON.stringify(geo_file),
                 'prop_name': JSON.stringify(prop_name),
                 'prop_val': JSON.stringify(prop_val),
+                'layer': JSON.stringify(layer_name),
             },
             dataType: 'json',
             contentType: "application/json",

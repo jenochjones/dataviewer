@@ -113,9 +113,9 @@ def get_point_values(request):
     lat = request.GET['lat']
     lon = request.GET['lon']
     filename = request.GET['filename'].strip('"')
+    var = request.GET['layer'].strip('"')
 
     thredds_path = App.get_custom_setting('thredds_path')
-    var = 'precipitation'
     file = os.path.join(thredds_path, filename)
     series = geo.timeseries.point([file], var, (float(lat), float(lon)), ('lon', 'lat'), 'time')
     data = pd.DataFrame.to_json(series)
@@ -130,6 +130,7 @@ def get_shp_values(request):
     geo_file = request.GET['geo_file'].strip('"')
     prop_name = request.GET['prop_name'].strip('"')
     prop_val = request.GET['prop_val'].strip('"')
+    var = request.GET['layer'].strip('"')
 
     new_geojson = os.path.join('/Users/jonjones/tethysdev/apps/tethysapp-dataviewer/tethysapp/dataviewer/',
                                'workspaces', 'user_workspaces', 'temp.geojson')
@@ -137,7 +138,6 @@ def get_shp_values(request):
     write_new_geojson(geo_file, prop_name, prop_val, new_geojson)
 
     thredds_path = App.get_custom_setting('thredds_path')
-    var = 'precipitation'
     file = os.path.join(thredds_path, nc_file)
     series = geo.timeseries.polygons(files=[file], var=var, poly=new_geojson,
                                      dims=('lon', 'lat'), t_dim='time', stats='mean,max,median,min,sum,std')
@@ -154,9 +154,9 @@ def get_box_values(request):
     min_lat = request.GET['min_lat']
     min_lon = request.GET['min_lon']
     filename = request.GET['filename'].strip('"')
+    var = request.GET['layer'].strip('"')
 
     thredds_path = App.get_custom_setting('thredds_path')
-    var = 'precipitation'
     file = os.path.join(thredds_path, filename)
     series = geo.timeseries.bounding_box([file], var, (float(min_lon), float(min_lat)),
                                          (float(max_lon), float(max_lat)), ('lon', 'lat'), 'time', stats='mean,max,median,min,sum,std')

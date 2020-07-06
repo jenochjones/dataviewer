@@ -26,15 +26,14 @@ function basemaps() {
     }
 }
 
-function data_layer(filename, layer, files, date_range){
+function data_layer(filename, layer_name, files){
     if (firstlayeradded == true) {
         mapObj.removeLayer(wmsLayerTime);
     }
     const wmsurl = thredds_url + files + filename;
-    const current_layer = layer;
 
     const wmsLayer = L.tileLayer.wms(wmsurl, {
-        layers: 'precipitation',
+        layers: layer_name,
         dimension: 'time',
         useCache: true,
         crossOrigin: false,
