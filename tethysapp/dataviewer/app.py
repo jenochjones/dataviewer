@@ -31,11 +31,6 @@ class Dataviewer(TethysAppBase):
                 controller='dataviewer.controllers.home'
             ),
             UrlMap(
-                name='uploadShapefile',
-                url='dataviewer/ajax/uploadShapefile',
-                controller='dataviewer.ajax.uploadShapefile'
-            ),
-            UrlMap(
                 name='plot_at_point',
                 url='dataviewer/ajax/get_point_values',
                 controller='dataviewer.ajax.get_point_values'
@@ -51,17 +46,17 @@ class Dataviewer(TethysAppBase):
                 controller='dataviewer.ajax.get_box_values'
             ),
             UrlMap(
+                name='uploadShapefile',
+                url='dataviewer/ajax/uploadShapefile',
+                controller='dataviewer.ajax.uploadShapefile'
+            ),
+            UrlMap(
                 name='user_geojsons',
                 url='dataviewer/ajax/user_geojsons',
                 controller='dataviewer.ajax.user_geojsons'
             ),
             UrlMap(
-                name='file_tree',
-                url='dataviewer/options/file_tree',
-                controller='dataviewer.options.file_tree'
-            ),
-            UrlMap(
-                name='frename_shp',
+                name='rename_shp',
                 url='dataviewer/ajax/rename_shp',
                 controller='dataviewer.ajax.rename_shp'
             ),
@@ -71,9 +66,14 @@ class Dataviewer(TethysAppBase):
                 controller='dataviewer.ajax.delete_shp'
             ),
             UrlMap(
-                name='get_nc_attr',
-                url='dataviewer/options/get_nc_attr',
-                controller='dataviewer.options.get_nc_attr'
+                name='file_tree',
+                url='dataviewer/options/file_tree',
+                controller='dataviewer.options.file_tree'
+            ),
+            UrlMap(
+                name='create_metadata_array',
+                url='dataviewer/options/create_metadata_array',
+                controller='dataviewer.options.create_metadata_array'
             ),
         )
 

@@ -16,11 +16,11 @@ def solve_environment(threddspath):
     logging.info('\nSetting the Environment for the GFS Workflow')
     # determine the most day and hour of the day timestamp of the most recent GFS forecast
     now = datetime.datetime.utcnow() - datetime.timedelta(hours=6)
-    print('now: ' + str(now))
+    #print('now: ' + str(now))
     if now.hour >= 18:
         timestamp = now.strftime("%Y%m%d") + '18'
-        print(now.strftime("%Y%m%d"))
-        print('timestamp: ' + timestamp)
+        #print(now.strftime("%Y%m%d"))
+        #print('timestamp: ' + timestamp)
     elif now.hour >= 12:
         timestamp = now.strftime("%Y%m%d") + '12'
     elif now.hour >= 6:
@@ -84,8 +84,8 @@ def download_gfs(threddspath, timestamp):
     gribsdir = os.path.join(threddspath, timestamp, 'gribs')
 
     # This is the List of forecast timesteps for 7 days (6-hr increments)
-    fc_steps = ['006', '012', '018'] #, '024', '030', '036', '042', '048', '054', '060', '066', '072', '078', '084',
-                # '090', '096', '102', '108', '114', '120', '126', '132', '138', '144', '150', '156', '162', '168']
+    fc_steps = ['006', '012', '018',]# '024', '030', '036', '042', '048', '054', '060', '066', '072', '078', '084',
+                #'090', '096', '102', '108', '114', '120', '126', '132', '138', '144', '150', '156', '162', '168']
 
     # if you already have a folder with data for this timestep, quit this function (you dont need to download it)
     if not os.path.exists(gribsdir):
@@ -103,13 +103,13 @@ def download_gfs(threddspath, timestamp):
     # # get the parts of the timestamp to put into the url
     fc_hour = datetime.datetime.strptime(timestamp, "%Y%m%d%H").strftime("%H")
     fc_date = datetime.datetime.strptime(timestamp, "%Y%m%d%H").strftime("%Y%m%d")
-    print(fc_hour)
-    print(fc_date)
+    #print(fc_hour)
+    #print(fc_date)
 
     for step in fc_steps:
         url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t' + fc_hour + 'z.pgrb2.0p25.f' + \
               step + '&all_lev=on&all_var=on&dir=%2Fgfs.' + fc_date + '%2F' + fc_hour
-        print(url)
+        #print(url)
 
         file_timestep = datetime.datetime.strptime(timestamp, "%Y%m%d%H")
         file_timestep = file_timestep + datetime.timedelta(hours=int(step))
@@ -142,38 +142,25 @@ def download_gfs(threddspath, timestamp):
     return True
 
 
-def set_wmsbounds(threddspath, timestamp):
-    logging.info('\nSetting new WMS bounds')
-    # setting the environment file paths
-    gribs = os.path.join(threddspath, timestamp, 'gribs')
-    allgrbs = os.listdir(gribs)
-    db = {}
+def set_wmsbounds(variable):
+    for data in variable:
+        minimum = int(data.minimum)
+        maximum = int(data.maximum)
+        print(minimum)
+        print(maximum)
+        #shortname = data.shortName
+        #if shortname not in db:
+            #db[shortname] = [minimum, maximum]
+        #else:
+            #newmin = min(db[shortname][0], minimum)
+            #newmax = max(db[shortname][1], maximum)
+            #db[shortname] = [newmin, newmax]
 
-    for grib in allgrbs:
-        path = os.path.join(gribs, grib)
-        file = pygrib.open(path)
-        file.seek(0)
-        for data in file:
-            minimum = int(data.minimum)
-            maximum = int(data.maximum)
-            shortname = data.shortName
-            if shortname not in db:
-                db[shortname] = [minimum, maximum]
-            else:
-                newmin = min(db[shortname][0], minimum)
-                newmax = max(db[shortname][1], maximum)
-                db[shortname] = [newmin, newmax]
+    #formatted = {}
+    #for var in db:
+       # formatted[var] = str(db[var][0]) + ',' + str(db[var][1])
 
-    formatted = {}
-    for var in db:
-        formatted[var] = str(db[var][0]) + ',' + str(db[var][1])
-
-    boundsfile = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tethysapp', 'gfs', 'public', 'js', 'bounds.js')
-    with open(boundsfile, 'w') as file:
-        file.write('const bounds = ' + json.dumps(formatted, ensure_ascii=True) + ';')
-    logging.info('Wrote boundaries to ' + boundsfile)
-    return
+    return minimum
 
 
 def grib_to_netcdf(threddspath, timestamp, forecastlevels):
@@ -242,6 +229,8 @@ def grib_to_netcdf(threddspath, timestamp, forecastlevels):
                         new_nc[short].units = variable.units
                         new_nc[short].long_name = variable.name
                         new_nc[short].gfs_level = level
+                        new_nc[short].date_range = '07/07/2020'
+                        new_nc[short].bounds = set_wmsbounds(variable)
                         new_nc[short].begin_date = data_time
                         new_nc[short].axis = 'lat lon'
 
@@ -263,7 +252,7 @@ def grib_to_netcdf(threddspath, timestamp, forecastlevels):
     logging.info('Conversion Completed')
     return
 
-
+'''
 def new_ncml(threddspath, timestamp, forecastlevels):
     logging.info('\nWriting a new ncml file for this date')
     # create a new ncml file by filling in the template with the right dates and writing to a file
@@ -293,7 +282,7 @@ def new_ncml(threddspath, timestamp, forecastlevels):
             )
         logging.info('wrote ncml for ' + level)
     return
-
+'''
 
 def cleanup(threddspath, timestamp):
     # delete anything that isn't the new folder of data (named for the timestamp) or the new wms.ncml file
@@ -353,11 +342,11 @@ def workflow(threddspath='', clobber='no'):
         if os.path.isfile(runlock):
             os.remove(runlock)
         return 'Workflow Aborted- Downloading Errors Occurred'
-    set_wmsbounds(threddspath, timestamp)
+    #set_wmsbounds(threddspath, timestamp)
 
     # convert to netcdfs
     grib_to_netcdf(threddspath, timestamp, forecastlevels)
-    new_ncml(threddspath, timestamp, forecastlevels)
+    #new_ncml(threddspath, timestamp, forecastlevels)
 
     # finish things up
     cleanup(threddspath, timestamp)

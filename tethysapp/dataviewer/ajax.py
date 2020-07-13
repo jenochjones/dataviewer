@@ -163,6 +163,7 @@ def get_box_values(request):
     data = pd.DataFrame.to_json(series)
     time = 'datetime'
     value = ('mean', 'max', 'median', 'min', 'sum', 'std')
+    print(series)
 
     return JsonResponse({'data': data, 'time': time, 'value': value})
 

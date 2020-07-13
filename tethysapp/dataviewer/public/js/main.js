@@ -31,6 +31,19 @@ function getCookie(name) {
     return cookieValue;
 }
 /////////////////////////////////////////////////////////////////////////////////////
+// Functions to run on map load
+$(function() {
+    select_data('none');
+    addUserLayers('none');
+    get_layer_metadata();
+    pathToDisplayedFile = '';
+    firstlayeradded = false;
+});
+
+// let layerWMS = data_layer();
+// let layerControls = layer_control();
+
+/////////////////////////////////////////////////////////////////////////////////
 // CREATE GRAPHS
 // GET VALUES FROM NETCDFS
 function draw_graph(data, time, value) {
@@ -87,41 +100,47 @@ function draw_graph(data, time, value) {
             x: x,
             y: y1,
             name: 'Mean',
-            type: 'scatter'
+            type: 'scatter',
+            visible: true,
         };
 
         var max = {
             x: x,
             y: y2,
             name: 'Max',
-            type: 'scatter'
+            type: 'scatter',
+            visible: 'legendonly',
         };
         var median = {
             x: x,
             y: y3,
             name: 'Median',
-            type: 'scatter'
+            type: 'scatter',
+            visible: 'legendonly',
         };
 
         var min = {
             x: x,
             y: y4,
             name: 'Min',
-            type: 'scatter'
+            type: 'scatter',
+            visible: 'legendonly',
         };
 
         var sum = {
             x: x,
             y: y5,
             name: 'Sum',
-            type: 'scatter'
+            type: 'scatter',
+            visible: 'legendonly',
         };
 
         var std = {
             x: x,
             y: y6,
             name: 'St Div',
-            type: 'scatter'
+            type: 'scatter',
+            visible: 'legendonly',
         };
 
         var layout = {
@@ -141,12 +160,21 @@ function draw_graph(data, time, value) {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
+function get_layer_metadata() {
+    $.ajax({
+        url: '/apps/dataviewer/options/create_metadata_array/',
+        dataType: 'json',
+        contentType: "application/json",
+        method: 'GET',
+        success: function (result) {}
+    })
+}
+
 // POPULATE DATA OPTIONS
 function select_data(option) {
-
     $.ajax({
         url: '/apps/dataviewer/options/file_tree/',
-        data: {'option': JSON.stringify(option)},
+        data: {'option': option},
         dataType: 'json',
         contentType: "application/json",
         method: 'GET',
@@ -156,8 +184,9 @@ function select_data(option) {
             filetree = JSON.parse(result['filetree']);
             filepath = last;
 
-            $('#file-tree').append(`<br><input type="checkbox" id="${filepath}" class="filetree-checkbox" onclick="expand_tree(filepath, $(this).attr('class'))" style="margin-left: 15px">
-                                        <label for="${filepath}">${filepath}</label><br>`);
+            $('#file-tree').append(`<br><input type="checkbox" id="${filepath}" class="filetree-checkbox" 
+                                    onclick="expand_tree(filepath, $(this).attr('class'))" style="margin-left: 15px">
+                                    <label for="${filepath}">${filepath}</label><br>`);
             buld_filetree(filepath);
         }
     })
@@ -170,8 +199,9 @@ function write(indent, key, item) {
     } else {
         var type = 'checkbox'
     }
-    $('#file-tree').append(`<div><input type="` + type + `" id="${item}" class="${key}" onclick="expand_tree(id, $(this).attr('class'))" style="margin-left: ${indent * 30}px; display: none">
-            <label for="${item}" class="${key}" style="display: none">${item}</label></div>`);
+    $('#file-tree').append(`<span style="white-space: nowrap; display: block"><input type="` + type + `" id="${item}" class="${key}" 
+                           onclick="expand_tree(id, $(this).attr('class'))" style="margin-left: ${indent * 30}px; display: none">
+                           <label for="${item}" class="${key}" style="display: none">${item}</label></span>`);
     if (item.substr(-3) != '.nc' && filetree[item] != undefined) {
         indent += 1;
         key = item;
@@ -220,31 +250,20 @@ function hide_elements(classname) {
 
 // ASSIGN VARIABLE LAYERS
 function assign_variable_layers(file_name, folder) {
-    let date_range = file_name.substr(0, 10) + '/' + file_name.substr(11, 10);
-    let filename = file_name;
+    // let date_range = file_name.substr(0, 10) + '/' + file_name.substr(11, 10);
+    //let filename = file_name;
     var files = '';
     var current_file = folder;
     while (current_file != filepath) {
         files = current_file + '/' + files;
         current_file = $('#' + current_file).attr('class');
     };
-    pathToDisplayedFile = files + filename;
-    $.ajax({
-        url: 'options/get_nc_attr/',
-        data: {
-            'filename': JSON.stringify(pathToDisplayedFile),
-        },
-        dataType: 'json',
-        contentType: "application/json",
-        method: 'GET',
-        success: function (result) {
-            $('#layer-prop-select').data('variables', jQuery.parseJSON(result['variables']));
-            $('#layer-diplay').css('display', 'block');
-            layer_name = set_var_select();
-            dataLayer = data_layer(filename, layer_name, files);
-            dataLayer.setOpacity($('#layer-opacity').val());
-        }
-    });
+    pathToDisplayedFile = files + file_name;
+    $('#layer-prop-select').data('variables', data_viewer_files[file_name]);
+    $('#layer-diplay').css('display', 'block');
+    layer_name = set_var_select();
+    dataLayer = data_layer(file_name, layer_name, files);
+    dataLayer.setOpacity($('#layer-opacity').val());
 }
 
 function set_var_select() {
@@ -261,19 +280,6 @@ function set_var_select() {
     var layer_name = $('#layer-prop-select').val();
     return layer_name;
 }
-
-///////////////////////////////////////////////////////////////////////////////////////
-
-// Functions to run on map load
-$(function() {
-    select_data('none');
-    addUserLayers('none');
-    pathToDisplayedFile = '';
-    firstlayeradded = false;
-});
-
-// let layerWMS = data_layer();
-// let layerControls = layer_control();
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //LOAD EXISTING USER LAYERS TO MAP
@@ -311,6 +317,7 @@ function addUserLayers(select_option) {
                 $('#properties').empty();
                 $('#properties').append(prop_id);
                 mapObj.flyToBounds(geo_layer.getBounds());
+                //layerControl.addOverlay(geo_layer, "Uploaded Shapefiles");
             }
         },
     });
@@ -390,10 +397,10 @@ function get_timeseries(type, layer) {
             $.ajax({
                 url: 'ajax/get_point_values/',
                 data: {
-                    'lat': JSON.stringify(lng),
-                    'lon': JSON.stringify(lat),
-                    'filename': JSON.stringify(pathToDisplayedFile),
-                    'layer': JSON.stringify(layer_name),
+                    'lat': lng,
+                    'lon': lat,
+                    'filename': pathToDisplayedFile,
+                    'layer': layer_name,
                 },
                 dataType: 'json',
                 contentType: "application/json",
@@ -416,12 +423,12 @@ function get_timeseries(type, layer) {
             $.ajax({
                 url: 'ajax/get_box_values/',
                 data: {
-                    'max_lat': JSON.stringify(max_lat),
-                    'max_lon': JSON.stringify(max_lon),
-                    'min_lat': JSON.stringify(min_lat),
-                    'min_lon': JSON.stringify(min_lon),
-                    'filename': JSON.stringify(pathToDisplayedFile),
-                    'layer': JSON.stringify(layer_name),
+                    'max_lat': max_lat,
+                    'max_lon': max_lon,
+                    'min_lat': min_lat,
+                    'min_lon': min_lon,
+                    'filename': pathToDisplayedFile,
+                    'layer': layer_name,
                 },
                 dataType: 'json',
                 contentType: "application/json",
@@ -443,11 +450,11 @@ function timeseriesFromShp(prop_val) {
         $.ajax({
             url: 'ajax/get_shp_values/',
             data: {
-                'nc_file': JSON.stringify(pathToDisplayedFile),
-                'geo_file': JSON.stringify(geo_file),
-                'prop_name': JSON.stringify(prop_name),
-                'prop_val': JSON.stringify(prop_val),
-                'layer': JSON.stringify(layer_name),
+                'nc_file': pathToDisplayedFile,
+                'geo_file': geo_file,
+                'prop_name': prop_name,
+                'prop_val': prop_val,
+                'layer': layer_name,
             },
             dataType: 'json',
             contentType: "application/json",
@@ -461,7 +468,7 @@ function timeseriesFromShp(prop_val) {
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-// MAP EVENT FUNCTIONS
+// MAP EVENT FUNCTIONS, BUTTONS AND SUCH
 mapObj.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
         layer = e.layer;
@@ -470,11 +477,27 @@ mapObj.on(L.Draw.Event.CREATED, function (e) {
 });
 
 drawnItems.on('click', function (e) {
-    var type = e.layerType,
-        layer = e.layer;
-    alert(type);
-    alert(layer);
+    var layer = e.layer;
+    if (layer instanceof L.Rectangle) {
+        var type = 'rectangle';
+    } else {
+        var type = 'marker';
+    }
     get_timeseries(type, layer);
+});
+
+$('#add-nc').click(function () {
+
+});
+
+$('#add-file').click(function () {
+
+});
+
+$('#delet-from-tree').click(function () {
+    let file_to_delete = pathToDisplayedFile.split('\\').pop().split('/').pop();
+    console.log(filetree);
+    confirm('Are you sure you want to delete ' + file_to_delete + '?');
 });
 
 $('#clear-map').click(function(){
@@ -495,7 +518,7 @@ $('#delete-shp').click(function () {
     $.ajax({
         url: 'ajax/delete_shp/',
         data: {
-            'shp_name': JSON.stringify(shp_name),
+            'shp_name': shp_name,
         },
         dataType: 'json',
         contentType: "application/json",
@@ -519,8 +542,8 @@ $('#rename-shp').click(function () {
     $.ajax({
         url: 'ajax/rename_shp/',
         data: {
-            'shp_name': JSON.stringify(shp_name),
-            'new_name': JSON.stringify(new_name),
+            'shp_name': shp_name,
+            'new_name': new_name,
         },
         dataType: 'json',
         contentType: "application/json",
@@ -543,3 +566,16 @@ $('#layer-opacity').change(function () {
     dataLayer.setOpacity($('#layer-opacity').val());
 });
 
+$('#layer-prop-select').change(function () {
+    let filename = pathToDisplayedFile.split('\\').pop().split('/').pop();
+    let files = pathToDisplayedFile.split("/").slice(0, -1).join("/")+"/";
+    console.log(filename);
+    console.log(files);
+    let layer_name = $('#layer-prop-select').val();
+    console.log(layer_name);
+    dataLayer = data_layer(filename, layer_name, files);
+});
+
+$('#metadata').click(function () {
+    console.log(Object.keys(data_viewer_files));
+});

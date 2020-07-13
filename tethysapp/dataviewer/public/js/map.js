@@ -1,15 +1,11 @@
 let mapObj = map();
-let basemapObj = basemaps();
+basemapObj=basemaps();
 
 function map() {
     return L.map('map', {
         center: [0, 0],
         zoom: 3,
         timeDimension: true,
-/*        timeDimensionOptions: {
-            timeInterval: "2014-09-30/2014-10-30",
-            period: "PT1H"
-        }, */
         timeDimensionControl: true,
     });
 }
@@ -40,7 +36,6 @@ function data_layer(filename, layer_name, files){
         format: 'image/png',
         transparent: true,
         colorscalerange: '0,100',
-        //BGCOLOR: '0x000000',
     });
 
     wmsLayerTime = L.timeDimension.layer.wms(wmsLayer, {
@@ -54,23 +49,3 @@ function data_layer(filename, layer_name, files){
 
     return wmsLayerTime.addTo(mapObj);
 }
-/*
-function drawing_layer(){
-    return L.layerGroup().addTo(mapObj);
-}
-
-function data_layer(filename, layer, files, date_range){
-    const wmsurl = thredds_url + files + filename;
-    const current_layer = layer;
-    alert(current_layer);
-
-    return netCDF_layer = L.tileLayer.wms(wmsurl, {
-        layers: 'precipitation',
-        useCache: true,
-        crossOrigin: false,
-        format: 'image/png',
-        transparent: true,
-        colorscalerange: '0,100',
-    }).addTo(mapObj);
-}
-*/

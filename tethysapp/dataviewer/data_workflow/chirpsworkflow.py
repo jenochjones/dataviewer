@@ -41,7 +41,7 @@ def tifs_to_netcdfs(tif_filepath, nc_filepath, date, filename, num_days):
     new_nc.createDimension('lat', 2000)
     new_nc.createDimension('lon', 7200)
     time = new_nc.createVariable('time', 'f8', ('time',))
-    time.units = 'days since 2000-01-01 00:00:00.0'
+    time.units = 'days since 2000-01-01 00:00:00'
     time.calendar = 'gregorian'
     lat = new_nc.createVariable(varname='lat', datatype='f4', dimensions='lat')
     lon = new_nc.createVariable(varname='lon', datatype='f4', dimensions='lon')

@@ -19,6 +19,7 @@ def walk_files(path, dictionary):
 
     return dictionary
 
+
 def file_tree(request):
     dictionary = {}
     thredds_path = App.get_custom_setting('thredds_path')
@@ -31,18 +32,66 @@ def file_tree(request):
 
     return JsonResponse({'filetree': filetree_json})
 
-def get_nc_attr(request):
-    last_half_filepath = request.GET['filename'].strip('"')
-    thredds_path = App.get_custom_setting('thredds_path')
-    full_path = os.path.join(thredds_path, last_half_filepath)
-    src = netCDF4.Dataset(full_path)
-    variables = {}
 
+def get_array_from_file():
+    path = os.path.join(os.path.dirname(__file__), 'public', 'js', 'layer_metadata.js')
+    file = open(path, "r")
+    string = file.read()
+    if string == '':
+        array = {}
+        return array
+    else:
+        loc = string.find('{')
+        json_array = string[loc:]
+        file.close()
+        array = json.loads(json_array)
+        return array
+
+
+def print_to_file(array):
+    array = json.dumps(array)
+    path = os.path.join(os.path.dirname(__file__), 'public', 'js', 'layer_metadata.js')
+    file = open(path, "w")
+    stuff_to_write = 'const data_viewer_files = ' + str(array)
+    file.write(stuff_to_write)
+    file.close()
+
+
+def arrange_array(filepath):
+    src = netCDF4.Dataset(filepath)
+    variables = {}
     for name, variable in src.variables.items():
         name_val = {}
         for attrname in variable.ncattrs():
-            name_val[attrname] = getattr(variable, attrname)
+            name_val[attrname.strip('"')] = getattr(variable, attrname).strip('"')
         variables[name] = name_val
+    return variables
 
-    variable_dict = json.dumps(variables)
-    return JsonResponse({'variables': variable_dict})
+
+def file_metadata(path, array):
+    file = glob.glob(os.path.join(path, '*'))
+    for files in file:
+        if files[-3:] == '.nc':
+            x = 0
+            for element in array:
+                if element == os.path.basename(files):
+                    x += 1
+
+            if x == 0:
+                metadata = arrange_array(files)
+                array[os.path.basename(files)] = metadata
+
+    if file != []:
+        for files in file:
+            file_metadata(os.path.join(path, files), array)
+
+    return array
+
+
+def create_metadata_array(request):
+    path = App.get_custom_setting('thredds_path')
+    array = {}
+    complete_array = file_metadata(path, array)
+    print_to_file(complete_array)
+    message = True
+    return JsonResponse({'message': message})
