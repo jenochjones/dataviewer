@@ -63,7 +63,7 @@ function draw_graph(data, time, value) {
             y: y1,
             name: 'Percipitation',
             type: 'scatter'
-        }
+        };
 
         var layout = {
             title: 'Timeseries',
@@ -187,6 +187,9 @@ function select_data(option) {
             $('#file-tree').append(`<br><input type="checkbox" id="${filepath}" class="filetree-checkbox" 
                                     onclick="expand_tree(filepath, $(this).attr('class'))" style="margin-left: 15px">
                                     <label for="${filepath}">${filepath}</label><br>`);
+            $('#file-tree-model').append(`<br><input type="checkbox" id="${filepath}" class="filetree-checkbox" 
+                                    onclick="expand_tree(filepath, $(this).attr('class'))" style="margin-left: 15px">
+                                    <label for="${filepath}">${filepath}</label><br>`);
             buld_filetree(filepath);
         }
     })
@@ -301,7 +304,7 @@ function addUserLayers(select_option) {
                 $('#shp-select').append('<option id="' + filenames[i].split(" ").join("") + '" value="' + filenames[i] + '">' + filenames[i] + '</option>');
                 $('#' + filenames[i].split(" ").join("") + '').data('layer', geojson_layer);
 
-                let option_insert = '<option value="" disabled selected hidden>Display Property</option>';
+                let option_insert = '';
                 let option_keys = Object.keys(current_layer.features[0].properties);
                 for(var s = 0, leng = (option_keys).length; s < leng; s++) {
                     option_insert = option_insert + '<option value="' + option_keys[s] + '">' + option_keys[s] + '</option>';
@@ -322,7 +325,9 @@ function addUserLayers(select_option) {
         },
     });
 }
+
 //ADD A USER SHAPEFILE TO THE MAP
+//Button controlls
 $('#add-shp').click(function() {
     $('#uploadshp-modal').modal('show');
 });
@@ -331,6 +336,7 @@ $('#uploadshp').click(function() {
     uploadShapefile();
 });
 
+//Ajax call to send the shapefile to the client side
 function uploadShapefile() {
     let files = $('#shapefile-upload')[0].files;
 
@@ -361,6 +367,7 @@ function uploadShapefile() {
     });
 }
 
+//Create a geojson layer on the map using the shapefile the user uploaded
 function make_file_layer(geojson) {
     let polygons = geojson;
     let style = {
@@ -372,16 +379,17 @@ function make_file_layer(geojson) {
         style: style,
         onEachFeature: EachFeature,
     });
-    return user_layer.addTo(mapObj);
+    return user_layer.addTo(shpLayer);
 }
 
+//Set
 function EachFeature(feature, layer) {
     layer.on('click', function(){
         layer.bindPopup('<div id="name-insert" style="text-align: center">'
                         + '<h1>' + feature.properties[$('#properties').val()] + '</h1></div>'
                         + '<br><button id="get-timeseries" style="width: 100%; height: 50px; '
                         + 'background-color: aqua" onclick="timeseriesFromShp(`' + String(feature.properties[$('#properties').val()]) + '`)">'
-                        + 'Get Timeseries</button></div>');
+                        + 'Get Timeseries</button><div id="loading" class="loader"></div>');
     });
 }
 //////////////////////////////////////////////////////////////////////////////////
@@ -442,6 +450,8 @@ function get_timeseries(type, layer) {
 }
 
 function timeseriesFromShp(prop_val) {
+    $('#get-timeseries').css('display', 'none');
+    $('#loading').css('display', 'block');
     if (pathToDisplayedFile == '') {
         alert('Please select a data layer.');
     } else {
@@ -461,6 +471,8 @@ function timeseriesFromShp(prop_val) {
             method: 'GET',
             success: function (result) {
                 draw_graph(result['data'], result['time'], result['value']);
+                $('#loading').css('display', 'none');
+                $('#get-timeseries').css('display', 'inline-block');
             },
         });
     }
@@ -487,11 +499,11 @@ drawnItems.on('click', function (e) {
 });
 
 $('#add-nc').click(function () {
-
+    $('#upload-nc-modal').modal('show');
 });
 
 $('#add-file').click(function () {
-
+    alert('add file')
 });
 
 $('#delet-from-tree').click(function () {
@@ -500,22 +512,20 @@ $('#delet-from-tree').click(function () {
     confirm('Are you sure you want to delete ' + file_to_delete + '?');
 });
 
+$('#file-metadata').click(function () {
+    alert('metadata')
+});
+
 $('#clear-map').click(function(){
     drawnItems.clearLayers();
 });
 
-$('#shp-select').change(function () {
-    let id = $('#shp-select').val();
-    let geo_layer = $('#' + id.split(" ").join("") + '').data('layer');
-    let prop_id = $('#' + id.split(" ").join("") + '').data('options');
-    $('#properties').empty();
-    $('#properties').append(prop_id);
-    mapObj.flyToBounds(geo_layer.getBounds());
-});
-
 $('#delete-shp').click(function () {
     let shp_name = $('#shp-select').val();
-    $.ajax({
+    var r = confirm('Are you sure you want to delete ' + shp_name + '?');
+
+    if (r == true) {
+        $.ajax({
         url: 'ajax/delete_shp/',
         data: {
             'shp_name': shp_name,
@@ -527,18 +537,17 @@ $('#delete-shp').click(function () {
             let results = result['result'];
             if (results == true) {
                 $('#shp-select').empty();
-                mapObj.removeLayer(user_layer);
+                shpLayer.clearLayers();
                 addUserLayers('none');
-            } else {
-                alert('False');
             }
         },
-    });
+        });
+    }
 });
 
 $('#rename-shp').click(function () {
     let shp_name = $('#shp-select').val();
-    let new_name = prompt('New name of the layer (without file extention)', 'example_shp');
+    let new_name = prompt('New name of the layer (without file extension)', 'example_shp');
     $.ajax({
         url: 'ajax/rename_shp/',
         data: {
@@ -555,8 +564,6 @@ $('#rename-shp').click(function () {
                 $('#shp-select').empty();
                 mapObj.removeLayer(user_layer);
                 addUserLayers(name);
-            } else {
-                alert('False');
             }
         },
     });
@@ -565,6 +572,16 @@ $('#rename-shp').click(function () {
 $('#layer-opacity').change(function () {
     dataLayer.setOpacity($('#layer-opacity').val());
 });
+
+$('#shp-select').change(function () {
+    let id = $('#shp-select').val();
+    let geo_layer = $('#' + id.split(" ").join("") + '').data('layer');
+    let prop_id = $('#' + id.split(" ").join("") + '').data('options');
+    $('#properties').empty();
+    $('#properties').append(prop_id);
+    mapObj.flyToBounds(geo_layer.getBounds());
+});
+
 
 $('#layer-prop-select').change(function () {
     let filename = pathToDisplayedFile.split('\\').pop().split('/').pop();

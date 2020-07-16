@@ -9,7 +9,7 @@ import netCDF4
 import numpy
 import pygrib
 import requests
-import json
+from glob import glob
 
 
 def solve_environment(threddspath):
@@ -30,7 +30,7 @@ def solve_environment(threddspath):
     logging.info('determined the timestamp to download: ' + timestamp)
 
     # perform a redundancy check, if the last timestamp is the same as current, abort the workflow
-    timefile = os.path.join(threddspath, 'last_run.txt')
+    timefile = os.path.join(threddspath, 'GFS', 'last_run.txt')
     try:
         with open(timefile, 'r') as file:
             lasttime = file.readline()
@@ -45,35 +45,25 @@ def solve_environment(threddspath):
             else:
                 # check to see if there are remnants of partially completed runs and dont destroy old folders
                 redundant = False
-                test = os.path.join(threddspath, timestamp, 'netcdfs')
+                test = os.path.join(threddspath, 'GFS',)
                 if os.path.exists(test):
                     logging.info('There are directories for this timestep but the workflow wasn\'t finished. '
                                  'Attempting to resume...')
                     return timestamp, redundant
     except:
         redundant = False
-
     # find folders from partially completed runs that were never resumed
     for file in os.listdir(threddspath):
         path = os.path.join(threddspath, file)
-        if os.path.isdir(path) and file != timestamp:
-            shutil.rmtree(path)
+        print(path)
+        #if os.path.isdir(path) and file != timestamp:
+            #print('true')
+            #shutil.rmtree(path)
 
     # create the file structure and their permissions for the new data
     logging.info('Creating THREDDS file structure')
-    new_dir = os.path.join(threddspath, timestamp)
-    if os.path.exists(new_dir):
-        shutil.rmtree(new_dir)
-    os.mkdir(new_dir)
-    os.chmod(new_dir, 0o777)
-    for filetype in ('gribs', 'netcdfs'):
-        new_dir = os.path.join(threddspath, timestamp, filetype)
-        if os.path.exists(new_dir):
-            shutil.rmtree(new_dir)
-        os.mkdir(new_dir)
-        os.chmod(new_dir, 0o777)
 
-    open(os.path.join(threddspath, 'running.txt'), 'w')
+    open(os.path.join(threddspath, 'GFS', 'running.txt'), 'w')
     logging.info('Created folders, wrote running warning, beginning gfs workflow functions')
     return timestamp, redundant
 
@@ -81,17 +71,20 @@ def solve_environment(threddspath):
 def download_gfs(threddspath, timestamp):
     logging.info('\nStarting GFS grib Downloads')
     # set filepaths
-    gribsdir = os.path.join(threddspath, timestamp, 'gribs')
+    gribsdir = os.path.join(threddspath, 'GFS')
+    print('g: ' + str(gribsdir))
 
     # This is the List of forecast timesteps for 7 days (6-hr increments)
-    fc_steps = ['006', '012', '018',]# '024', '030', '036', '042', '048', '054', '060', '066', '072', '078', '084',
-                #'090', '096', '102', '108', '114', '120', '126', '132', '138', '144', '150', '156', '162', '168']
+    fc_steps = ['006', '012', '018', '024', '030', '036', '042', '048', '054', '060', '066', '072', '078', '084',
+                '090', '096', '102', '108', '114', '120', '126', '132', '138', '144', '150', '156', '162', '168']
 
     # if you already have a folder with data for this timestep, quit this function (you dont need to download it)
     if not os.path.exists(gribsdir):
+        print('check')
         logging.info('There is no download folder, you must have already processed them. Skipping download stage.')
         return True
     elif len(os.listdir(gribsdir)) >= len(fc_steps):
+        print('check2')
         logging.info('There is already gfs data here. Skipping download stage.')
         return True
     # otherwise, remove anything in the folder before starting (in case there was a partial download)
@@ -103,8 +96,6 @@ def download_gfs(threddspath, timestamp):
     # # get the parts of the timestamp to put into the url
     fc_hour = datetime.datetime.strptime(timestamp, "%Y%m%d%H").strftime("%H")
     fc_date = datetime.datetime.strptime(timestamp, "%Y%m%d%H").strftime("%Y%m%d")
-    #print(fc_hour)
-    #print(fc_date)
 
     for step in fc_steps:
         url = 'https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t' + fc_hour + 'z.pgrb2.0p25.f' + \
@@ -163,11 +154,82 @@ def set_wmsbounds(variable):
     return minimum
 
 
+def combine_netcdfs(final_filepath, main_files):
+    files = glob(os.path.join(main_files, '*.nc'))
+    files.sort()
+    nc_filepath = os.path.join(final_filepath, os.path.basename(files[0]))
+    new_nc = netCDF4.Dataset(nc_filepath, 'w')
+    src = netCDF4.Dataset(files[0])
+
+    new_nc.createDimension('time', None)
+    new_nc.createDimension('lat', 721)
+    new_nc.createDimension('lon', 1440)
+
+    for name, variable in src.variables.items():
+
+        if name == 'time' or name == 'lat' or name == 'lon':
+            new_nc.createVariable(varname=name, datatype='f4', dimensions=name)
+            for attrname in variable.ncattrs():
+                if attrname == 'axis':
+                    new_nc[name].axis = getattr(variable, attrname)
+                elif attrname == 'begin_date':
+                    new_nc[name].begin_date = getattr(variable, attrname)
+
+        else:
+            new_nc.createVariable(varname=name, datatype='f4', dimensions=('time', 'lat', 'lon'))
+            for attrname in variable.ncattrs():
+                if attrname == 'axis':
+                    new_nc[name].axis = getattr(variable, attrname)
+                elif attrname == 'units':
+                    new_nc[name].units = getattr(variable, attrname)
+                elif attrname == 'gfs_level':
+                    new_nc[name].gfs_level = getattr(variable, attrname)
+                elif attrname == 'long_name':
+                    new_nc[name].long_name = getattr(variable, attrname)
+                elif attrname == 'begin_date':
+                    new_nc[name].begin_date = getattr(variable, attrname)
+
+    new_nc['time'].units = 'hours since 2020-07-07 12:00:00'
+    # new_nc['time'].units = 'hours since ' + date
+    new_nc['time'].calendar = 'gregorian'
+
+    # create the lat and lon values
+    new_nc['lat'][:] = [-90 + (.25 * i) for i in range(721)]
+    new_nc['lon'][:] = [-180 + (.25 * i) for i in range(1440)]
+
+    time_dim = 0
+    for file in files:
+        nc = netCDF4.Dataset(file)
+        file_time = os.path.basename(file)[-13:-3]
+
+        file_date = datetime.datetime(int(file_time[:4]), int(file_time[5:6]), int(file_time[7:8]),
+                                      int(file_time[8:10]))
+        new_nc['time'][time_dim] = netCDF4.date2num(file_date, units=new_nc['time'].units,
+                                                    calendar=new_nc['time'].calendar)
+
+        for name, variable in nc.variables.items():
+            if name != 'time' and name != 'lat' and name != 'lon':
+                new_nc[name][time_dim, :] = nc[name][:]
+
+        time_dim += 1
+
+    new_nc.close()
+
+
+def manage_files(first_path, final_path):
+    path_to_files = glob(os.path.join(first_path, '*'))
+    path_to_files.sort()
+
+    for file in path_to_files:
+        combine_netcdfs(final_path, file)
+
+
 def grib_to_netcdf(threddspath, timestamp, forecastlevels):
     logging.info('\nStarting Grib Conversions')
     # setting the environment file paths
-    gribs = os.path.join(threddspath, timestamp, 'gribs')
-    netcdfs = os.path.join(threddspath, timestamp, 'netcdfs')
+    gribs = os.path.join(threddspath, 'GFS')
+    netcdfs = os.path.join(threddspath, 'GFS')
+    print('Made it to gribs')
 
     # if you already have gfs netcdfs in the netcdfs folder, quit the function
     if not os.path.exists(gribs):
@@ -176,15 +238,17 @@ def grib_to_netcdf(threddspath, timestamp, forecastlevels):
     # otherwise, remove anything in the folder before starting (in case there was a partial conversion)
     else:
         shutil.rmtree(netcdfs)
-        os.mkdir(netcdfs)
-        os.chmod(netcdfs, 0o777)
 
     # for each grib file you downloaded, open it, convert it to a netcdf
     files = os.listdir(gribs)
+    print('files: ' + str(files))
     files = [grib for grib in files if grib.endswith('.grb')]
+    print('files: ' + str(files))
     for level in forecastlevels:
+        print('level: ' + str(level))
         logging.info('working on level ' + level)
         start = time.time()
+        print('start: ' + str(start))
         hour = 6
         latitudes = [-90 + (i * .25) for i in range(721)]
         longitudes = [-180 + (i * .25) for i in range(1440)]
@@ -230,7 +294,7 @@ def grib_to_netcdf(threddspath, timestamp, forecastlevels):
                         new_nc[short].long_name = variable.name
                         new_nc[short].gfs_level = level
                         new_nc[short].date_range = '07/07/2020'
-                        new_nc[short].bounds = set_wmsbounds(variable)
+                        #new_nc[short].bounds = set_wmsbounds(variable)
                         new_nc[short].begin_date = data_time
                         new_nc[short].axis = 'lat lon'
 
@@ -244,6 +308,7 @@ def grib_to_netcdf(threddspath, timestamp, forecastlevels):
             hour += 6
             new_nc.close()
             gribfile.close()
+            manage_files(netcdfs, netcdfs)
             logging.info('  Process took ' + str(round(time.time() - start, 2)))
 
     # delete the gribs now that you're done with them triggering future runs to skip the download step
@@ -289,7 +354,7 @@ def cleanup(threddspath, timestamp):
     logging.info('\nGetting rid of old data folders')
     files = os.listdir(threddspath)
     for file in files:
-        path = os.path.join(threddspath, file)
+        path = os.path.join(threddspath, 'GFS', file)
         # keep last_run.txt, running.txt, ncml files, and the directory for the timestamp
         if file.endswith('.txt') or file.endswith('.log') or file.endswith('.ncml') or file == timestamp:
             os.chmod(path, 0o777)
@@ -307,17 +372,17 @@ def workflow(threddspath='', clobber='no'):
     """
     Accepts environment settings then runs the workflow functions in the order they should be executed
     """
-    runlock = os.path.join(threddspath, 'running.txt')
-
+    runlock = os.path.join(threddspath, 'GFS', 'running.txt')
+    print('runlock: ' + str(runlock))
     # enable logging to track the progress of the workflow and for debugging
-    logfile = os.path.join(threddspath, 'workflow.log')
+    logfile = os.path.join(threddspath, 'GFS', 'workflow.log')
     logging.basicConfig(filename=logfile, filemode='w', level=logging.INFO, format='%(message)s')
     logging.info('Workflow initiated on ' + datetime.datetime.utcnow().strftime("%D at %R"))
 
     # handle the clobber option
     if clobber in ['yes', 'true']:
         logging.info('You chose the clobber option. the timestamps and all the data folders will be overwritten')
-        timefile = os.path.join(threddspath, 'last_run.txt')
+        timefile = os.path.join(threddspath, 'GFS', 'last_run.txt')
         with open(timefile, 'w') as file:
             file.write('clobbered')
 
@@ -351,7 +416,7 @@ def workflow(threddspath='', clobber='no'):
     # finish things up
     cleanup(threddspath, timestamp)
     os.remove(runlock)
-    with open(os.path.join(threddspath, 'last_run.txt'), 'w') as file:
+    with open(os.path.join(threddspath, 'GFS', 'last_run.txt'), 'w') as file:
         file.write(timestamp)
 
     logging.info('\n\nGFS Workflow completed successfully on ' + datetime.datetime.utcnow().strftime("%D at %R"))
@@ -364,17 +429,18 @@ if __name__ == '__main__':
     if not os.path.exists(path):
         print('This path does not exist. Please check the path and try again.')
         exit()
-    elif os.path.isfile(os.path.join(path, 'last_run_failed.txt')):
+    elif os.path.isfile(os.path.join(path, 'GFS', 'last_run_failed.txt')):
         print('Last run failed. You need to figure out why. Deleting old data and trying again')
         shutil.rmtree(path)
         os.mkdir(path)
-    elif os.path.isfile(os.path.join(path, 'running.txt')):
+    elif os.path.isfile(os.path.join(path, 'GFS', 'running.txt')):
         print('There is a running.txt file preventing another workflow run.')
         exit()
     try:
         workflow(threddspath=path)
     except Exception as e:
-        if os.path.exists(os.path.join(path, 'running.txt')):
-            os.remove(os.path.join(path, 'running.txt'))
-        with open(os.path.join(path, 'last_run_failed.txt'), 'w') as fail:
+        if os.path.exists(os.path.join(path, 'GFS', 'running.txt')):
+            os.remove(os.path.join(path, 'GFS', 'running.txt'))
+        with open(os.path.join(path, 'GFS', 'last_run_failed.txt'), 'w') as fail:
+            print(str(e))
             fail.writelines(str(e))

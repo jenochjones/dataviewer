@@ -15,18 +15,19 @@
 
 {% block app_navigation_items %}
   <br>
-  <div style="background-color: #ffffff; padding-bottom: 10px;">
-    <div id="file-tree" style="width: 270px; height: 250px; background-color: #ffffff; overflow-y: scroll; overflow-x: auto;"></div>
-      <button id="add-nc" style="width: 220px; background-color: #99d0c2;  margin-left: 25px;">Add netCDF</button><br>
-      <button id="add-file" style="width: 110px; background-color: #99d0c2; margin-top: 10px; margin-left: 25px;">Add File</button>
-      <button id="delet-from-tree" style="width: 110px; background-color: #99d0c2; margin-top: 10px;">Delete</button><br>
+  <div class="main-cont">
+    <div id="file-tree" class="file-tree-cont"></div>
+      <div class="nav-cont">
+        <button id="add-nc" class="half-button">Add netCDF</button>
+        <button id="file-metadata" class="half-button">Metadata</button>
+      </div>
     </div>
   <br>
   <div id="layer-diplay" style="display: none">
-    <div style="width: 100%; height: 140px; background-color: white; text-align: center;">
-      <b style="display: inline-block; margin: 10px">Layer Display Controls</b>
+    <div class="nav-cont" style="height: 140px;">
+      <p>Layer Display Controls</p>
       <select id="layer-prop-select" name="layer-prop-select" style="width: 80%;"></select>
-      <p style="display: inline-block; margin: 10px">Layer Opacity</p>
+      <p>Layer Opacity</p>
       <input type="range" min="0" max="1" step="0.01" value="0.5" style="width: 80%; display: inline-block" id="layer-opacity">
     </div>
     <br>
@@ -35,12 +36,11 @@
       <b style="display: inline-block; margin: 10px">User Uploaded Shapefiles</b>
       <select id="shp-select" name="shp-select" style="width: 80%;"></select>
       <select id="properties" name="properties" style="width: 80%; margin: 10px"></select>
-      <button id="add-shp" style="display: inline-block; width: 80%; background-color: #99d0c2">Add Shapefiles</button><br>
-      <button id="delete-shp" style="display: inline-block; width: 39%; background-color: #99d0c2; margin-top: 10px;">Delete</button>
-      <button id="rename-shp" style="display: inline-block; width: 39%; background-color: #99d0c2; margin-top: 10px;">Rename</button><br>
+      <button id="add-shp" class="full-button">Add Shapefiles</button><br>
+      <button id="delete-shp" class="half-button">Delete</button>
+      <button id="rename-shp" class="half-button">Rename</button><br>
   </div>
   <button id="clear-map" style="width: 80%; margin: 30px; display: inline-block; background-color: #99d0c2">Clear Map</button>
- <button id="metadata" style="width: 80%; margin: 30px; display: inline-block; background-color: #99d0c2">Log Metadata</button>
 {% endblock %}
 
 {% block app_content %}
@@ -51,11 +51,11 @@
 
 {% block content_dependent_styles %}
   {{ block.super }}
+  <link href="{% static 'dataviewer/css/main.css' %}" rel="stylesheet"/>
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-timedimension@1.1.1/dist/leaflet.timedimension.control.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/>
-  <link href="{% static 'chirps/css/main.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block scripts %}

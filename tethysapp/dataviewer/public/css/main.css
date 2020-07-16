@@ -1,3 +1,16 @@
+h1 {
+    display: inline-block;
+}
+
+h2 {
+    display: inline-block;
+}
+
+p {
+    display: inline-block;
+    margin: 10px
+}
+
 #map {
     position: absolute;
     left: 0;
@@ -6,7 +19,59 @@
     bottom: 50px;
 }
 
-.nested {
+.main-cont {
+    background-color: #ffffff;
+    padding-bottom: 10px;
+}
+
+.file-tree-cont {
+    width: 270px;
+    height: 250px;
+    background-color: #ffffff;
+    overflow-y: scroll;
+    overflow-x: auto;
+}
+
+.loader {
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #3498db;
     display: none;
-    color: pink;
+    width: 45px;
+    height: 45px;
+    -webkit-animation: spin 2s linear infinite; /* Safari */
+    animation: spin 2s linear infinite;
+}
+
+.full-button {
+    width: 220px;
+    background-color: #99d0c2;
+    margin-bottom: 15px;
+}
+
+.half-button {
+    width: 110px;
+    background-color: #99d0c2;
+    margin-bottom: 15px;
+}
+
+.nav-cont {
+    width: 100%;
+    background-color: white;
+    text-align: center;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.modal-text-container {
+    text-align: center;
 }

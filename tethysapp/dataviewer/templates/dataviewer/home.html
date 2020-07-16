@@ -13,60 +13,62 @@
 
 {# Use the after_app_content block for modals #}
 {% block after_app_content %}
-  <!-- Example Modal -->
-  <div class="modal fade" id="help-modal" tabindex="-1" role="dialog" aria-labelledby="help-modal-label">
-    <div class="modal-dialog" role="document">
+  <!-- Upload netCDF -->
+  <div class="modal fade" id="upload-nc-modal" tabindex="-1" role="dialog" aria-labelledby="shp-modal-label">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="width: 50%">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h5 class="modal-title" id="help-modal-label">Example Modal</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" ><span aria-hidden="true">X</span></button>
         </div>
-        <div class="modal-body">
-          <p>You can add custom buttons to the app header using the <code>header_buttons</code> block. Use anchor/link tags for the button and wrap it in a div with the class <code>header-button</code>. For buttons with the gliphyicons, add the <code>glyphicon-button</code> class as well.</p>
-          <p>Ever have trouble using a modal in a Tethys app? Use the <code>after_app_content</code> block for modal content to allow them to function properly. See: <a href="https://getbootstrap.com/javascript/#modals">Bootstrap Modals</a></p>
-          <p>Add tooltips to any element by adding the <code>data-toggle</code>, <code>data-placement</code>, and <code>title</code> attributes to the button. See: <a href="https://getbootstrap.com/javascript/#tooltips">Bootstrap Tooltips</a></p>
+        <form action="" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+        <div class="modal-text-container">
+          <h2>Upload a NetCDF File</h2>
+          <div id="file-tree-model" style="width: 425px; height: 250px; background-color: #ffffff; overflow-y: scroll; overflow-x: auto; display: inline-block"></div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
-        </div>
+        </form>
       </div>
     </div>
   </div>
 
   <!-- Upload Shapefile -->
-  <div class="modal fade" style="text-align: center" id="uploadshp-modal" tabindex="-1" role="dialog" aria-labelledby="shp-modal-label">
-    <div class="box" style="width: 500px; height: 200px;">
-      <div>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>
-      </div>
-      <form action="" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-      <div>
-        <h2>Upload a Shapefile</h2>
-        <br>
-        <div>
-          <input type="file" class="local-file-upload" style="float: left" id="shapefile-upload" accept=".shp,.prj,.shx,.dbf," multiple>
-          <button type="button" class="btn btn-success" style="float: right" id="uploadshp">Submit Shapefile</button>
+  <div class="modal fade" id="uploadshp-modal" tabindex="-1" role="dialog" aria-labelledby="shp-modal-label">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="width: 50%">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" ><span aria-hidden="true">X</span></button>
         </div>
-        <div>
-          <br><br>
-          <p>
-            Select four files with the endings '.shp', '.shx', '.prj', and '.dbf'.
-          </p>
+        <form action="" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+        <div class="modal-text-container">
+          <h2>Upload a Shapefile</h2>
+          <br>
+          <div>
+            <input type="file" class="local-file-upload" id="shapefile-upload"
+                   style="display: inline-block" accept=".shp,.prj,.shx,.dbf," multiple>
+            <button type="button" class="btn btn-success" id="uploadshp">Submit Shapefile</button>
+          </div>
+          <div>
+            <br>
+            <p>
+              Select four files with the endings '.shp', '.shx', '.prj', and '.dbf'.
+            </p>
+          </div>
         </div>
+        </form>
       </div>
-      </form>
     </div>
   </div>
 
   <!-- Timeseries -->
-  <div class="modal fade" style="text-align: center" id="timeseries-model" tabindex="-1" role="dialog" aria-labelledby="shp-modal-label">
-    <div class="box" style="width: 800px; height: 550px;">
-      <div>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>
+  <div class="modal fade" id="timeseries-model" tabindex="-1" role="dialog" aria-labelledby="shp-modal-label">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="width: 50%">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" ><span aria-hidden="true">X</span></button>
+        </div>
+        <div id="point_plot" style="width: 100%"></div>
       </div>
-      <div id="point_plot"></div>
     </div>
   </div>
 {% endblock %}
