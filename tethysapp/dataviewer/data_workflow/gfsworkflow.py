@@ -72,11 +72,10 @@ def download_gfs(threddspath, timestamp):
     logging.info('\nStarting GFS grib Downloads')
     # set filepaths
     gribsdir = os.path.join(threddspath, 'GFS')
-    print('g: ' + str(gribsdir))
 
     # This is the List of forecast timesteps for 7 days (6-hr increments)
-    fc_steps = ['006', '012', '018', '024', '030', '036', '042', '048', '054', '060', '066', '072', '078', '084',
-                '090', '096', '102', '108', '114', '120', '126', '132', '138', '144', '150', '156', '162', '168']
+    fc_steps = ['006', '012', '018'] # '024', '030', '036', '042', '048', '054', '060', '066', '072', '078', '084',
+               # '090', '096', '102', '108', '114', '120', '126', '132', '138', '144', '150', '156', '162', '168']
 
     # if you already have a folder with data for this timestep, quit this function (you dont need to download it)
     if not os.path.exists(gribsdir):
@@ -373,7 +372,6 @@ def workflow(threddspath='', clobber='no'):
     Accepts environment settings then runs the workflow functions in the order they should be executed
     """
     runlock = os.path.join(threddspath, 'GFS', 'running.txt')
-    print('runlock: ' + str(runlock))
     # enable logging to track the progress of the workflow and for debugging
     logfile = os.path.join(threddspath, 'GFS', 'workflow.log')
     logging.basicConfig(filename=logfile, filemode='w', level=logging.INFO, format='%(message)s')

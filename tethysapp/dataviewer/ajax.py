@@ -121,6 +121,8 @@ def get_point_values(request):
     data = pd.DataFrame.to_json(series)
     time = 'datetime'
     value = 'values'
+    csv_filepath = os.path.join(os.path.dirname(__file__), 'workspaces', 'user_workspaces', 'timeseries.csv')
+    series.to_csv(csv_filepath, index = False)
 
     return JsonResponse({'data': data, 'time': time, 'value': value})
 
@@ -132,8 +134,7 @@ def get_shp_values(request):
     prop_val = request.GET['prop_val'].strip('"')
     var = request.GET['layer'].strip('"')
 
-    new_geojson = os.path.join('/Users/jonjones/tethysdev/apps/tethysapp-dataviewer/tethysapp/dataviewer/',
-                               'workspaces', 'user_workspaces', 'temp.geojson')
+    new_geojson = os.path.join(os.path.dirname(__file__), 'workspaces', 'user_workspaces', 'temp.geojson')
 
     write_new_geojson(geo_file, prop_name, prop_val, new_geojson)
 
@@ -144,6 +145,8 @@ def get_shp_values(request):
     data = pd.DataFrame.to_json(series)
     time = 'datetime'
     value = ('mean', 'max', 'median', 'min', 'sum', 'std')
+    csv_filepath = os.path.join(os.path.dirname(__file__), 'workspaces', 'user_workspaces', 'timeseries.csv')
+    series.to_csv(csv_filepath, index = False)
 
     return JsonResponse({'data': data, 'time': time, 'value': value})
 
@@ -163,7 +166,8 @@ def get_box_values(request):
     data = pd.DataFrame.to_json(series)
     time = 'datetime'
     value = ('mean', 'max', 'median', 'min', 'sum', 'std')
-    print(series)
+    csv_filepath = os.path.join(os.path.dirname(__file__), 'workspaces', 'user_workspaces', 'timeseries.csv')
+    series.to_csv(csv_filepath, index = False)
 
     return JsonResponse({'data': data, 'time': time, 'value': value})
 

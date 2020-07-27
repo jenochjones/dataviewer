@@ -7,6 +7,17 @@ function map() {
         zoom: 3,
         timeDimension: true,
         timeDimensionControl: true,
+        timeDimensionControlOptions: {
+            position: "bottomleft",
+            autoPlay: true,
+            loopButton: true,
+            backwardButton: true,
+            forwardButton: true,
+            timeSliderDragUpdate: true,
+            minSpeed: 2,
+            maxSpeed: 6,
+            speedStep: 1,
+        },
     });
 }
 
@@ -22,11 +33,12 @@ function basemaps() {
     }
 }
 
-function data_layer(filename, layer_name, files){
+function data_layer(filename, layer_name, files, times){
     if (firstlayeradded == true) {
         mapObj.removeLayer(wmsLayerTime);
     }
     const wmsurl = thredds_url + files + filename;
+    console.log(times);
 
     const wmsLayer = L.tileLayer.wms(wmsurl, {
         layers: layer_name,
@@ -38,14 +50,13 @@ function data_layer(filename, layer_name, files){
         colorscalerange: '0,100',
     });
 
-    wmsLayerTime = L.timeDimension.layer.wms(wmsLayer, {
+    const wmsLayerTime = L.timeDimension.layer.wms(wmsLayer, {
         name: 'time',
         requestTimefromCapabilities: true,
         updateTimeDimension: true,
         updateTimeDimensionMode: 'replace',
+        cache: 20,
     });
-
     firstlayeradded = true;
-
     return wmsLayerTime.addTo(mapObj);
 }

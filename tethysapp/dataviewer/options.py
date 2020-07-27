@@ -60,11 +60,32 @@ def print_to_file(array):
 def arrange_array(filepath):
     src = netCDF4.Dataset(filepath)
     variables = {}
+    times = ''
+
     for name, variable in src.variables.items():
         name_val = {}
+
         for attrname in variable.ncattrs():
-            name_val[attrname.strip('"')] = getattr(variable, attrname).strip('"')
+            name_val[attrname] = str(getattr(variable, attrname)).strip('"')
         variables[name] = name_val
+
+    if 'time' in variables:
+        timearray = src.variables["time"][:]
+    if 'units' in variables["time"]:
+        units = src.variables["time"].units
+    else:
+        units = 'hours since 1-1-1 00:00:0.0'
+    if 'calendar' in variables["time"]:
+        cal = src.variables["time"].calendar
+    else:
+        cal = 'gregorian'
+
+    if 'time' in variables:
+        for t in timearray:
+            date = netCDF4.num2date(times=int(t), units=units, calendar=cal)
+            times = times + str(date) + ','
+
+    variables['time_step'] = times
     return variables
 
 

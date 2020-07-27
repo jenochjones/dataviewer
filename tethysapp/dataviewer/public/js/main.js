@@ -30,7 +30,7 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-/////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 // Functions to run on map load
 $(function() {
     select_data('none');
@@ -159,7 +159,7 @@ function draw_graph(data, time, value) {
     }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 function get_layer_metadata() {
     $.ajax({
         url: '/apps/dataviewer/options/create_metadata_array/',
@@ -187,38 +187,38 @@ function select_data(option) {
             $('#file-tree').append(`<br><input type="checkbox" id="${filepath}" class="filetree-checkbox" 
                                     onclick="expand_tree(filepath, $(this).attr('class'))" style="margin-left: 15px">
                                     <label for="${filepath}">${filepath}</label><br>`);
-            $('#file-tree-model').append(`<br><input type="checkbox" id="${filepath}" class="filetree-checkbox" 
-                                    onclick="expand_tree(filepath, $(this).attr('class'))" style="margin-left: 15px">
+            $('#file-tree-modal').append(`<br><input type="checkbox" id="${filepath}" class="filetree-checkbox" 
+                                    onclick="expand_tree_modal(filepath, $(this).attr('class'))" style="margin-left: 15px">
                                     <label for="${filepath}">${filepath}</label><br>`);
-            buld_filetree(filepath);
+            buld_filetree(filepath, 'file-tree');
         }
     })
 }
 
-function write(indent, key, item) {
+function write(indent, key, item, id) {
     var item_string = String(item);
     if (item_string.substr(-3) == '.nc') {
         var type = 'radio" name="file'
     } else {
         var type = 'checkbox'
     }
-    $('#file-tree').append(`<span style="white-space: nowrap; display: block"><input type="` + type + `" id="${item}" class="${key}" 
+    $('#' + id + '').append(`<span style="white-space: nowrap; display: block"><input type="` + type + `" id="${item}" class="${key}" 
                            onclick="expand_tree(id, $(this).attr('class'))" style="margin-left: ${indent * 30}px; display: none">
                            <label for="${item}" class="${key}" style="display: none">${item}</label></span>`);
     if (item.substr(-3) != '.nc' && filetree[item] != undefined) {
         indent += 1;
         key = item;
         filetree[item].forEach(function (item) {
-            write(indent, key, item);
+            write(indent, key, item, id);
         })
     }
 }
 
-function buld_filetree(key) {
+function buld_filetree(key, id) {
     var indent = 1;
     if (filetree[key] != undefined) {
         filetree[key].forEach(function (item) {
-            write(indent, key, item);
+            write(indent, key, item, id);
         });
     }
 }
@@ -228,6 +228,22 @@ function expand_tree(id, tree_class) {
     if (id_string.substr(-3) == '.nc') {
         var folder = tree_class;
         assign_variable_layers(id_string, folder);
+    } else {
+        var checkBox = document.getElementById(id);
+        if (checkBox.checked == true){
+            $('.' + id).show();
+        } else {
+            hide_elements(id);
+        }
+    }
+}
+
+function expand_tree_modal(id, tree_class) {
+    var id_string = String(id);
+    if (id_string.substr(-3) == '.nc') {
+        console.log(id);
+        //var folder = tree_class;
+        //assign_variable_layers(id_string, folder);
     } else {
         var checkBox = document.getElementById(id);
         if (checkBox.checked == true){
@@ -249,7 +265,7 @@ function hide_elements(classname) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
 
 // ASSIGN VARIABLE LAYERS
 function assign_variable_layers(file_name, folder) {
@@ -261,11 +277,12 @@ function assign_variable_layers(file_name, folder) {
         files = current_file + '/' + files;
         current_file = $('#' + current_file).attr('class');
     };
+    var times = data_viewer_files[file_name].time_steps;
     pathToDisplayedFile = files + file_name;
     $('#layer-prop-select').data('variables', data_viewer_files[file_name]);
     $('#layer-diplay').css('display', 'block');
     layer_name = set_var_select();
-    dataLayer = data_layer(file_name, layer_name, files);
+    dataLayer = data_layer(file_name, layer_name, files, times);
     dataLayer.setOpacity($('#layer-opacity').val());
 }
 
@@ -284,7 +301,7 @@ function set_var_select() {
     return layer_name;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 //LOAD EXISTING USER LAYERS TO MAP
 function addUserLayers(select_option) {
     $.ajax({
@@ -311,6 +328,8 @@ function addUserLayers(select_option) {
                 }
 
                 $('#' + filenames[i].split(" ").join("") + '').data('options', option_insert);
+                $('#' + filenames[i].split(" ").join("") + '').data('option_keys', option_keys);
+                $('#' + filenames[i].split(" ").join("") + '').data('name', filenames[i].split(" ").join(""));
             }
             if (select_option !== 'none') {
                 $('#' + select_option + '').attr("selected", "selected");
@@ -385,6 +404,17 @@ function make_file_layer(geojson) {
 //Set
 function EachFeature(feature, layer) {
     layer.on('click', function(){
+        $('#shp-select > option').each(function() {
+            let id = $(this).val();
+            if (id != '') {
+                let prop = Object.keys(feature.properties);
+                let prop2 = $('#' + id + '').data('option_keys');
+                let name = $('#' + id + '').data('name');
+                if (String(prop) == String(prop2) | String(id) != String(name)) {
+                    $('#shp-select').val(name).change();
+                }
+            }
+        });
         layer.bindPopup('<div id="name-insert" style="text-align: center">'
                         + '<h1>' + feature.properties[$('#properties').val()] + '</h1></div>'
                         + '<br><button id="get-timeseries" style="width: 100%; height: 50px; '
@@ -401,6 +431,8 @@ function get_timeseries(type, layer) {
             var coord = layer.getLatLng();
             var lat = coord.lat;
             var lng = coord.lng;
+            alert(coord);
+
 
             $.ajax({
                 url: 'ajax/get_point_values/',
@@ -451,7 +483,7 @@ function get_timeseries(type, layer) {
 
 function timeseriesFromShp(prop_val) {
     $('#get-timeseries').css('display', 'none');
-    $('#loading').css('display', 'block');
+    $('#loading').css('display', 'inline-block');
     if (pathToDisplayedFile == '') {
         alert('Please select a data layer.');
     } else {
@@ -500,6 +532,8 @@ drawnItems.on('click', function (e) {
 
 $('#add-nc').click(function () {
     $('#upload-nc-modal').modal('show');
+    buld_filetree(filepath, 'file-tree-modal');
+
 });
 
 $('#add-file').click(function () {
@@ -586,13 +620,14 @@ $('#shp-select').change(function () {
 $('#layer-prop-select').change(function () {
     let filename = pathToDisplayedFile.split('\\').pop().split('/').pop();
     let files = pathToDisplayedFile.split("/").slice(0, -1).join("/")+"/";
-    console.log(filename);
-    console.log(files);
     let layer_name = $('#layer-prop-select').val();
-    console.log(layer_name);
     dataLayer = data_layer(filename, layer_name, files);
 });
 
 $('#metadata').click(function () {
     console.log(Object.keys(data_viewer_files));
+});
+
+$('#download-csv').click(function () {
+    alert('downloaded');
 });

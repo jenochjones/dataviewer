@@ -46,6 +46,7 @@ def tifs_to_netcdfs(tif_filepath, nc_filepath, date, filename, num_days):
     lat = new_nc.createVariable(varname='lat', datatype='f4', dimensions='lat')
     lon = new_nc.createVariable(varname='lon', datatype='f4', dimensions='lon')
     precipitation = new_nc.createVariable(varname='precipitation', datatype='f4', dimensions=('time', 'lat', 'lon',))
+    precipitation.long_name = 'Precipitation'
 
     # create the lat and lon values
     lat[:] = [-50 + (.05 * i) for i in range(2000)]
@@ -104,7 +105,7 @@ def dowlaod_historical_chirps(thredds_path):
     base_url = 'https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_daily/tifs/p05/2020/chirps-v2.0.'
     # today = datetime.datetime.today()
     today = datetime.datetime(2020, 2, 25)
-    num_days = 30
+    num_days = 1
     date_one = datetime_to(today, 'string', '%Y-%m-%d')
     date_two = datetime_to(today - datetime.timedelta(num_days), 'string', '%Y-%m-%d')
     date = ()
