@@ -33,12 +33,11 @@ function basemaps() {
     }
 }
 
-function data_layer(filename, layer_name, files, times){
+function data_layer(filename, layer_name, files){
     if (firstlayeradded == true) {
         mapObj.removeLayer(wmsLayerTime);
     }
     const wmsurl = thredds_url + files + filename;
-    console.log(times);
 
     const wmsLayer = L.tileLayer.wms(wmsurl, {
         layers: layer_name,
@@ -50,7 +49,7 @@ function data_layer(filename, layer_name, files, times){
         colorscalerange: '0,100',
     });
 
-    const wmsLayerTime = L.timeDimension.layer.wms(wmsLayer, {
+    wmsLayerTime = L.timeDimension.layer.wms(wmsLayer, {
         name: 'time',
         requestTimefromCapabilities: true,
         updateTimeDimension: true,

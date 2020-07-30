@@ -18,14 +18,4 @@ let drawControl = new L.Control.Draw({
 let shpLayer = new L.FeatureGroup().addTo(mapObj);
 
 mapObj.addControl(drawControl);
-
-/*function other_layers() {
-    return {
-        "Drawn Items": drawnItems,
-    }
-}*/
-
-//let layerControl = new L.control.layers(basemaps(), other_layers());
-//mapObj.addControl(layerControl);
-
 //////////////////////////////////////////////////////////////////////////////
